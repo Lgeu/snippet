@@ -25,17 +25,6 @@ def chineseRem(b1, m1, b2, m2):
 def modinv(a, mod=10**9+7):
     return pow(a, mod-2, mod)
 
-
-"""
-# mを法とするaの乗法的逆元
-def modinv(a, m):
-    g, x, y = egcd(a, m)
-    if g != 1:
-        raise Exception('modular inverse does not exist')
-    else:
-        return x % m
-"""
-
 # nCr mod m
 # modinvが必要
 # rがn/2に近いと非常に重くなる
