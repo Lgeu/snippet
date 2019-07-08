@@ -8,8 +8,23 @@ def egcd(a, b):
         g, y, x = egcd(b % a, a)
         return g, x - (b // a) * y, y
 
+
+def chineseRem(b1, m1, b2, m2):
+    # 中国剰余定理
+    # x ≡ b1 (mod m1) ∧ x ≡ b2 (mod m2) <=> x ≡ r (mod m)
+    # となる(r. m)を返す
+    # 解無しのとき(0, -1)
+    d, p, q = egcd(m1, m2)
+    if (b2 - b1) % d != 0:
+        return 0, -1
+    m = m1 * (m2 // d)  # m = lcm(m1, m2)
+    tmp = (b2-b1) // d * p % (m2 // d)
+    r = (b1 + m1 * tmp) % m
+    return r, m
+
 def modinv(a, mod=10**9+7):
     return pow(a, mod-2, mod)
+
 
 """
 # mを法とするaの乗法的逆元
@@ -93,10 +108,9 @@ def makePrimeChecker(n):
     isPrime[0] = False
     isPrime[1] = False
     for i in range(2, int(n ** 0.5) + 1):
-        if not isPrime[i]:
-            continue
-        for j in range(i * 2, n + 1, i):
-            isPrime[j] = False
+        if isPrime[i]:
+            for j in range(i * i, n + 1, i):
+                isPrime[j] = False
     return isPrime
 
 # 素因数分解
@@ -113,18 +127,26 @@ def prime_decomposition(n):
     return table
 
 
-def full(L):  # 並び替えをすべて挙げる，全探索用
-    # これitertools.permutationsでええやん！！！！！！！
-    if len(L) == 1:
-        return [L]
-    else:
-        L2 = []
-        for i in range(len(L)):
-            L2.extend([[L[i]] + Lc for Lc in full(L[:i] + L[i+1:])])
-        return L2
-"""
-from itertools import permutations
-"""
+def miller_rabin(n, t=10):
+    # http://tjkendev.github.io/procon-library/python/prime/probabilistic.html
+    # 確率的素数判定（ミラーラビン素数判定法）
+    # 素数なら確実に 1 を返す、合成数なら確率的に 0 を返す
+    # 1 が返ったなら恐らく素数で、0 が返ったなら確実に合成数である
+    # t が多いほど精度が良い
+    import random
+    if n==2: return 1
+    if n==1 or n&1==0: return 0
+    d = n-1
+    d //= d & -d
+    for _ in range(t):
+        a = random.randint(1, n-1)
+        t = d
+        y = pow(a, t, n)
+        while t!=n-1 and y!=1 and y!=n-1:
+            y = y**2 % n
+            t <<= 1
+        if y!=n-1 and t&1==0: return 0
+    return 1
 
 # 転倒数
 def mergecount(A):
@@ -154,14 +176,14 @@ def mergecount(A):
     return cnt
 
 # Binary Indexed Tree
-class Bit:
-    """
+"""
     0-indexed
     # 使用例
     bit = Bit(10)  # 要素数
     bit.add(2, 10)
     print(bit.sum(5))  # 10
-    """
+"""
+class Bit:
     def __init__(self, n):
         self.size = n
         self.tree = [0]*(n+1)
@@ -224,7 +246,7 @@ class BitImos:
         return self.bit.sum(key+1)
 
 """
-" BITで転倒数を求められる
+# BITで転倒数を求められる
 A = [3, 10, 1, 8, 5, 5, 1]
 bit = Bit(max(A)+1)
 ans = 0
@@ -233,39 +255,64 @@ for i, a in enumerate(A):
     bit.add(a, 1)
 print(ans)
 """
+
+# 未検証
+class Bit2:
+    def __init__(self, n):
+        self.bit0 = Bit(n)
+        self.bit1 = Bit(n)
+
+    def add(self, l, r, x):
+        # [l, r) に x を足す
+        self.bit0.add(l, -x * (l-1))
+        self.bit1.add(l, x)
+        self.bit0.add(r, x * (r-1))
+        self.bit1.add(r, -x)
+
+    def sum(self, l, r):
+        res = 0
+        res += self.bit0.sum(r) + self.bit1.sum(r) * (r-1)
+        res -= self.bit0.sum(l) + self.bit1.sum(l) * (l-1)
+        return res
+
+
+#E = defaultdict(lambda: defaultdict(lambda: float("inf")))
+from collections import defaultdict
 import heapq
 class Dijkstra:
     # 計算量 O((E+V)logV)
 
-    # adjは2次元defaultdict
+    # adjはdefaultdictのリスト
     def dijkstra(self, adj, start, goal=None):
 
         num = len(adj)  # グラフのノード数
-        dist = [float('inf') for i in range(num)]  # 始点から各頂点までの最短距離を格納する
-        prev = [float('inf') for i in range(num)]  # 最短経路における，その頂点の前の頂点のIDを格納する
+        self.dist = [float('inf') for i in range(num)]  # 始点から各頂点までの最短距離を格納する
+        self.prev = [float('inf') for i in range(num)]  # 最短経路における，その頂点の前の頂点のIDを格納する
 
-        dist[start] = 0
-        q = []  # プライオリティキュー．各要素は，(startからある頂点vまでの仮の距離, 頂点vのID)からなるタプル
-        heapq.heappush(q, (0, start))  # 始点をpush
+        self.dist[start] = 0
+        q = [(0, start)]  # プライオリティキュー．各要素は，(startからある頂点vまでの仮の距離, 頂点vのID)からなるタプル
 
         while len(q) != 0:
             prov_cost, src = heapq.heappop(q)  # pop
 
             # プライオリティキューに格納されている最短距離が，現在計算できている最短距離より大きければ，distの更新をする必要はない
-            if dist[src] < prov_cost:
+            if self.dist[src] < prov_cost:
                 continue
+
+            # 探索で辺を見つける場合ここに書く
+
 
             # 他の頂点の探索
             for dest, cost in adj[src].items():
-                if dist[dest] > dist[src] + cost:
-                    dist[dest] = dist[src] + cost  # distの更新
-                    heapq.heappush(q, (dist[dest], dest))  # キューに新たな仮の距離の情報をpush
-                    prev[dest] = src  # 前の頂点を記録
+                if self.dist[dest] > self.dist[src] + cost:
+                    self.dist[dest] = self.dist[src] + cost  # distの更新
+                    heapq.heappush(q, (self.dist[dest], dest))  # キューに新たな仮の距離の情報をpush
+                    self.prev[dest] = src  # 前の頂点を記録
 
         if goal is not None:
-            return self.get_path(goal, prev)
+            return self.get_path(goal, self.prev)
         else:
-            return dist
+            return self.dist
 
     def get_path(self, goal, prev):
         path = [goal]  # 最短経路
@@ -278,53 +325,46 @@ class Dijkstra:
 
         # 経路をreverseして出力
         return list(reversed(path))
-#from collections import defaultdict
-#E = defaultdict(lambda: defaultdict(lambda: float("inf")))
 
 
-# UF木
+# unionfind
 class Uf:
-    def __init__(self):
-        self.Par = list(range(N + 1))
+    def __init__(self, N):
+        self.p = list(range(N))
+        self.rank = [0] * N
+        self.size = [1] * N
 
     def root(self, x):
-        if self.Par[x] == x:
-            return x
-        else:
-            self.Par[x] = self.root(self.Par[x])
-            return self.Par[x]
+        if self.p[x] != x:
+            self.p[x] = self.root(self.p[x])
+
+        return self.p[x]
 
     def same(self, x, y):
         return self.root(x) == self.root(y)
 
     def unite(self, x, y):
-        x = self.root(x)
-        y = self.root(y)
-        if x != y:
-            self.Par[x] = y
+        u = self.root(x)
+        v = self.root(y)
 
-"""
-# UF木
-Par = list(range(N))
-def root(x):
-    if Par[x] == x:
-        return x
-    else:
-        Par[x] = root(Par[x])
-        return Par[x]
+        if u == v: return
 
-def same(x, y):
-    return root(x) == root(y)
+        if self.rank[u] < self.rank[v]:
+            self.p[u] = v
+            self.size[v] += self.size[u]
+            self.size[u] = 0
+        else:
+            self.p[v] = u
+            self.size[u] += self.size[v]
+            self.size[v] = 0
 
-def unite(x, y):
-    x = root(x)
-    y = root(y)
-    if x != y:
-        Par[x] = y
+            if self.rank[u] == self.rank[v]:
+                self.rank[u] += 1
+
+    def count(self, x):
+        return self.size[self.root(x)]
 
 
-# ----
-"""
 
 def norm(x1, y1, x2, y2):
     return ((x1-x2)**2 + (y1-y2)**2)**0.5
@@ -337,26 +377,356 @@ def points2line(x1, y1, x2, y2):
     return la, lb, lc
 
 
+
+"""
+# 高速ゼータ変換
+
+# 自身を含む集合を全て挙げる方
+N = 3
+f = [{i} for i in range(1<<N)]
+for i in range(N):
+    for j in range(1<<N):
+        if not (j & 1<<i):
+            f[j] |= f[j | (1<<i)]  # 総和は +=  # -=にすると逆変換になる
+print(f)
+
+# 部分集合をすべて挙げる方
+f = [{i} for i in range(1<<N)]
+for i in range(N):
+    for j in range(1<<N):
+        if j & 1<<i:
+            f[j] |= f[j ^ (1<<i)]
+print(f)
 """
 
+
+# https://atcoder.jp/contests/abc014/submissions/3935971
+class SegmentTree(object):
+    __slots__ = ["elem_size", "tree", "default", "op"]
+
+    def __init__(self, a: list, default: int, op):
+        from math import ceil, log
+        real_size = len(a)
+        self.elem_size = elem_size = 1 << ceil(log(real_size, 2))
+        self.tree = tree = [default] * (elem_size * 2)
+        tree[elem_size:elem_size + real_size] = a
+        self.default = default
+        self.op = op
+
+        for i in range(elem_size - 1, 0, -1):
+            tree[i] = op(tree[i << 1], tree[(i << 1) + 1])
+
+    def get_value(self, x: int, y: int) -> int:  # 半開区間
+        l, r = x + self.elem_size, y + self.elem_size
+        tree, result, op = self.tree, self.default, self.op
+        while l < r:
+            if l & 1:
+                result = op(tree[l], result)
+                l += 1
+            if r & 1:
+                r -= 1
+                result = op(tree[r], result)
+            l, r = l >> 1, r >> 1
+
+        return result
+
+    def set_value(self, i: int, value: int) -> None:
+        k = self.elem_size + i
+        self.tree[k] = value
+        self.update(k)
+
+    def update(self, i: int) -> None:
+        op, tree = self.op, self.tree
+        while i > 1:
+            i >>= 1
+            tree[i] = op(tree[i << 1], tree[(i << 1) + 1])
+"""
+C = [int(input()) for _ in range(N)]
+
+idx = [0] * N
+for i, c in enumerate(C):
+    idx[c-1] = i
+
+seg = SegmentTree([0]*(N+1), 0, min)
+for i in range(N):
+    idx_ = idx[i]
+    seg.set_value(idx_, seg.get_value(0, idx_)-1)
+print(seg.get_value(0, N+1)+N)
+"""
+
+# 最長回文
+def man(S):
+    i = 0
+    j = 0
+    n = len(S)
+    R = [0]*n
+    while i < n:
+        while i-j >= 0 and i+j < n and S[i-j] == S[i+j]:
+            j+=1
+        R[i] = j
+        k = 1
+        while i-k >= 0 and i+k < n and k+R[i-k] < j:
+            R[i+k] = R[i-k]
+            k += 1
+        i += k
+        j -= k
+    return R
+
+# 最大流問題
+from collections import deque
+INF = float("inf")
+TO = 0;  CAP = 1;  REV = 2
+class Dinic:
+    def __init__(self, N):
+        self.N = N
+        self.V = [[] for _ in range(N)]  # to, cap, rev
+        # 辺 e = V[n][m] の逆辺は V[e[TO]][e[REV]]
+        self.level = [0] * N
+
+    def add_edge(self, u, v, cap):
+        self.V[u].append([v, cap, len(self.V[v])])
+        self.V[v].append([u, 0, len(self.V[u])-1])
+
+    def add_edge_undirected(self, u, v, cap):  # 未検証
+        self.V[u].append([v, cap, len(self.V[v])])
+        self.V[v].append([u, cap, len(self.V[u])-1])
+
+    def bfs(self, s: int) -> bool:
+        self.level = [-1] * self.N
+        self.level[s] = 0
+        q = deque()
+        q.append(s)
+        while len(q) != 0:
+            v = q.popleft()
+            for e in self.V[v]:
+                if e[CAP] > 0 and self.level[e[TO]] == -1:  # capが1以上で未探索の辺
+                    self.level[e[TO]] = self.level[v] + 1
+                    q.append(e[TO])
+        return True if self.level[self.g] != -1 else False  # 到達可能
+
+    def dfs(self, v: int, f) -> int:
+        if v == self.g:
+            return f
+        for i in range(self.ite[v], len(self.V[v])):
+            self.ite[v] = i
+            e = self.V[v][i]
+            if e[CAP] > 0 and self.level[v] < self.level[e[TO]]:
+                d = self.dfs(e[TO], min(f, e[CAP]))
+                if d > 0:  # 増加路
+                    e[CAP] -= d  # cap を減らす
+                    self.V[e[TO]][e[REV]][CAP] += d  # 反対方向の cap を増やす
+                    return d
+        return 0
+
+    def solve(self, s, g):
+        self.g = g
+        flow = 0
+        while self.bfs(s):  # 到達可能な間
+            self.ite = [0] * self.N
+            f = self.dfs(s, INF)
+            while f > 0:
+                flow += f
+                f = self.dfs(s, INF)
+        return flow
+
+
+# 凸包 Monotone Chain O(nlogn)
+def det(p, q):
+    return p[0]*q[1] - p[1]*q[0]
+def sub(p, q):
+    return (p[0]-q[0], p[1]-q[1])
+def get_convex_hull(points):
+    n = len(points)
+    points.sort()
+    size_convex_hull = 0
+    ch = []
+    for i in range(n):
+        while size_convex_hull > 1:
+            v_cur = sub(ch[-1], ch[-2])
+            v_new = sub(points[i], ch[-2])
+            if det(v_cur, v_new) > 0:
+                break
+            size_convex_hull -= 1
+            ch.pop()
+        ch.append(points[i])
+        size_convex_hull += 1
+
+    t = size_convex_hull
+    for i in range(n-2, -1, -1):
+        while size_convex_hull > t:
+            v_cur = sub(ch[-1], ch[-2])
+            v_new = sub(points[i], ch[-2])
+            if det(v_cur, v_new) > 0:
+                break
+            size_convex_hull -= 1
+            ch.pop()
+        ch.append(points[i])
+        size_convex_hull += 1
+
+    return ch[:-1]
+
+
+# 線分 AB と CD の交差判定
+def cross(x1, y1, x2, y2, x3, y3, x4, y4):
+    def f(x, y, x1, y1, x2, y2):  # 直線上にあるとき 0 になる
+        return (x1-x2)*(y-y1)+(y1-y2)*(x1-x)
+
+    # 点 C と点 D が直線 AB の異なる側にある
+    b1 = f(x3, y3, x1, y1, x2, y2) * f(x4, y4, x1, y1, x2, y2) < 0
+
+    # 点 A と点 B が直線 CD の異なる側にある
+    b2 = f(x1, y1, x3, y3, x4, y4) * f(x2, y2, x3, y3, x4, y4) < 0
+
+    return b1 and b2
+
+
+def intersection(circle, polygon):
+    # circle: (x, y, r)
+    # polygon: [(x1, y1), (x2, y2), ...]
+    # 円と多角形の共通部分の面積
+    # 多角形の点が反時計回りで与えられれば正の値、時計回りなら負の値を返す
+    from math import acos, hypot, isclose, sqrt
+    def cross(v1, v2):  # 外積
+        x1, y1 = v1
+        x2, y2 = v2
+        return x1 * y2 - x2 * y1
+
+    def dot(v1, v2):  # 内積
+        x1, y1 = v1
+        x2, y2 = v2
+        return x1 * x2 + y1 * y2
+
+    def seg_intersection(circle, seg):
+        # 円と線分の交点（円の中心が原点でない場合は未検証）
+        x0, y0, r = circle
+        p1, p2 = seg
+        x1, y1 = p1
+        x2, y2 = p2
+
+        p1p2 = (x2 - x1) ** 2 + (y2 - y1) ** 2
+        op1 = (x1 - x0) ** 2 + (y1 - y0) ** 2
+        rr = r * r
+        dp = dot((x1 - x0, y1 - y0), (x2 - x1, y2 - y1))
+
+        d = dp * dp - p1p2 * (op1 - rr)
+        ps = []
+
+        if isclose(d, 0.0, abs_tol=1e-9):
+            t = -dp / p1p2
+            if ge(t, 0.0) and le(t, 1.0):
+                ps.append((x1 + t * (x2 - x1), y1 + t * (y2 - y1)))
+        elif d > 0.0:
+            t1 = (-dp - sqrt(d)) / p1p2
+            if ge(t1, 0.0) and le(t1, 1.0):
+                ps.append((x1 + t1 * (x2 - x1), y1 + t1 * (y2 - y1)))
+            t2 = (-dp + sqrt(d)) / p1p2
+            if ge(t2, 0.0) and le(t2, 1.0):
+                ps.append((x1 + t2 * (x2 - x1), y1 + t2 * (y2 - y1)))
+
+        # assert all(isclose(r, hypot(x, y)) for x, y in ps)
+        return ps
+
+    def le(f1, f2):  # less equal
+        return f1 < f2 or isclose(f1, f2, abs_tol=1e-9)
+
+    def ge(f1, f2):  # greater equal
+        return f1 > f2 or isclose(f1, f2, abs_tol=1e-9)
+
+    x, y, r = circle
+    polygon = [(xp-x, yp-y) for xp, yp in polygon]
+    area = 0.0
+    for p1, p2 in zip(polygon, polygon[1:] + [polygon[0]]):
+        ps = seg_intersection((0, 0, r), (p1, p2))
+        for pp1, pp2 in zip([p1] + ps, ps + [p2]):
+            c = cross(pp1, pp2)  # pp1 と pp2 の位置関係によって正負が変わる
+            if c == 0:  # pp1, pp2, 原点が同一直線上にある場合
+                continue
+            d1 = hypot(*pp1)
+            d2 = hypot(*pp2)
+            if le(d1, r) and le(d2, r):
+                area += c / 2  # pp1, pp2, 原点を結んだ三角形の面積
+            else:
+                t = acos(dot(pp1, pp2) / (d1 * d2))  # pp1-原点とpp2-原点の成す角
+                sign = 1.0 if c >= 0 else -1.0
+                area += sign * r * r * t / 2  # 扇形の面積
+    return area
+
+def lis(A: list):  # 最長増加部分列
+    # https://ikatakos.com/pot/programming_algorithm/dynamic_programming/longest_common_subsequence
+    from bisect import bisect_left
+    L = [A[0]]
+    for a in A[1:]:
+        if a > L[-1]:
+            # Lの末尾よりaが大きければ増加部分列を延長できる
+            L.append(a)
+        else:
+            # そうでなければ、「aより小さい最大要素の次」をaにする
+            # 該当位置は、二分探索で特定できる
+            L[bisect_left(L, a)] = a
+    return len(L)
+
+class Lca:  # 最近共通祖先
+    def __init__(self, E, root):
+        import sys
+        sys.setrecursionlimit(500000)
+        self.root = root
+        self.E = E  # V<V>
+        self.n = len(E)  # 頂点数
+        self.logn = 1  # n < 1<<logn  ぴったりはだめ
+        while self.n >= (1<<self.logn):
+            self.logn += 1
+
+        # parent[n][v] = ノード v から 1<<n 個親をたどったノード
+        self.parent = [[-1]*self.n for _ in range(self.logn)]
+
+        self.depth = [0] * self.n
+        self.dfs(root, -1, 0)
+        for k in range(self.logn-1):
+            for v in range(self.n):
+                p_ = self.parent[k][v]
+                if p_ >= 0:
+                    self.parent[k+1][v] = self.parent[k][p_]
+
+    def dfs(self, v, p, dep):
+        # ノード番号、親のノード番号、深さ
+        self.parent[0][v] = p
+        self.depth[v] = dep
+        for e in self.E[v]:
+            if e != p:
+                self.dfs(e, v, dep+1)
+
+    def get(self, u, v):
+        if self.depth[u] > self.depth[v]:
+            u, v = v, u  # self.depth[u] <= self.depth[v]
+        dep_diff = self.depth[v]-self.depth[u]
+        for k in range(self.logn):
+            if dep_diff >> k & 1:
+                v = self.parent[k][v]
+        if u==v:
+            return u
+        for k in range(self.logn-1, -1, -1):
+            if self.parent[k][u] != self.parent[k][v]:
+                u = self.parent[k][u]
+                v = self.parent[k][v]
+        return self.parent[0][u]
+
+"""
+# 入力10**6行あたり約70ms早くなる inputの遅いPyPyでは約180ms？（これ嘘っぽい）
 import sys
-def input():  # 入力10**6行あたり約70ms早くなる inputの遅いPyPyでは約180ms
+def input():
     return sys.stdin.readline()[:-1]
+input = sys.stdin.readline
 
 from functools import lru_cache
 @lru_cache(maxsize=None)  # メモ化再帰したい関数の前につける
 
 import sys
 sys.setrecursionlimit(500000)
-#from operator import itemgetter
-from collections import defaultdict
-from itertools import product  # 直積
-
-ord("a") - 97  # chr
 
 N = int(input())
 N, K = map(int, input().split())
-L = [int(input()) for i in range(N)]
+L = [int(input()) for _ in range(N)]
 A = list(map(int, input().split()))
-S = [list(map(int, input().split())) for i in range(H)]
+S = [list(map(int, input().split())) for _ in range(H)]
 """
+
