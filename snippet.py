@@ -699,6 +699,37 @@ class Lca:  # 最近共通祖先
                 v = self.parent[k][v]
         return self.parent[0][u]
 
+def lagrange_interpolation(X, Y, mod):
+    # ラグランジュ補間 O(n^2)
+    # n 個の条件から n-1 次多項式を作る 返り値は次数の降順
+    # 検証: https://atcoder.jp/contests/abc137/submissions/6845025
+    # mod を取らない場合 scipy.interpolate.lagrange が使えそう
+    n = len(X)
+    g = [0]*(n+1)
+    g[0] = 1
+    for i, x in enumerate(X):
+        for j in range(i, -1, -1):
+            g[j+1] += g[j] * (-x) % mod
+    res = [0]*n
+    for x, y in zip(X, Y):
+        f = g[:]
+        denom = 0
+        v = 1
+        pow_x = [1]  # x の idx 乗
+        for _ in range(n-1):
+            v = v * x % mod
+            pow_x.append(v)
+        pow_x.reverse()  # n-1 乗 ~ 0 乗
+        for i, po in enumerate(pow_x):
+            f_i = f[i]
+            f[i+1] += f_i * x % mod  # f = g / (x - x_i) を組立除法で求める
+            denom = (denom + f_i * po) % mod
+        denom_inv = pow(denom, mod-2, mod)
+        for i, f_i in enumerate(f[:n]):
+            res[i] += (f_i * y * denom_inv)# % mod  # mod が大きいと 64bit に収まらなくなるのでひとつずつ mod 取った方がいいか？
+    return [v % mod for v in res]
+
+
 """
 # 入力10**6行あたり約70ms早くなる inputの遅いPyPyでは約180ms？（これ嘘っぽい）
 import sys
