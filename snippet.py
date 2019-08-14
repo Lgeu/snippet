@@ -729,6 +729,58 @@ def lagrange_interpolation(X, Y, mod):
             res[i] += (f_i * y * denom_inv)# % mod  # mod が大きいと 64bit に収まらなくなるのでひとつずつ mod 取った方がいいか？
     return [v % mod for v in res]
 
+class RollingHash:
+    # 未検証
+    # 参考1:  http://tjkendev.github.io/procon-library/python/string/rolling_hash.html
+    # 参考2:  https://ei1333.github.io/algorithm/rolling-hash.html
+    BASE = 1000
+    MOD = 1111111111111111111  # ≒10**18 素数  # 10**9くらいの素数2つ使うのとどちらが速い？
+    def __init__(self, s):
+        self.s = s
+        self.n = n = len(s)
+        BASE = RollingHash.BASE
+        MOD = RollingHash.MOD
+        self.h = h = [0]*(n+1)
+        for i in range(n):
+            h[i+1] = (h[i] * BASE + ord(s[i])) % MOD
+
+    def get(self, l, r):  # [l, r)
+        MOD = RollingHash.MOD
+        return (self.h[r] - self.h[l]*pow(RollingHash.BASE, r-l, MOD)) % MOD
+
+    @classmethod
+    def connect(cls, h1, h2, h2len):
+        return (h1 * pow(cls.BASE, h2len, cls.MOD) + h2) % cls.MOD
+
+    def lcp(self, h2, l1, r1, l2, r2):  # 最長共通接頭辞
+        # 区間の長さ N に対して O(logN)  # h2 は RollingHash オブジェクト
+        # 自身の [l1, r1) と h2 の [l2, r2) の最長共通接頭辞の長さを返す
+        length = min(r1-l1, r2-l2)
+        ok, ng = 0, length+1
+        while ng - ok > 1:
+            c = ok + ng >> 1
+            if self.get(l1, l1+c) == h2.get(l2, l2+c):
+                ok = c
+            else:
+                ng = c
+        return ok
+
+def convolve(A, B):
+    # 畳み込み  # 要素は整数
+    # 3 つ以上の場合は一度にやった方がいい
+    import numpy as np
+    dtype = np.int64  # np.float128 は windows では動かない？
+    fft, ifft = np.fft.rfft, np.fft.irfft
+    a, b = len(A), len(B)
+    if a==b==1:
+        return np.array([A[0]*B[0]])
+    n = a + b - 1  # 返り値のリストの長さ
+    k = 1 << (n-1).bit_length()  # n 以上の最小の 2 冪
+    AB = np.zeros((2, k), dtype=dtype)
+    AB[0, :a] = A
+    AB[1, :b] = B
+    return np.rint(ifft(fft(AB[0]) * fft(AB[1]))).astype(np.int64)[:n]
+
 
 """
 # 入力10**6行あたり約70ms早くなる inputの遅いPyPyでは約180ms？（これ嘘っぽい）
