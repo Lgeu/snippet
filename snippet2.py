@@ -165,8 +165,15 @@ def more_pell_minus_solutions(n, x, y):
 
 # カレンダー系
 # https://atcoder.jp/contests/arc010/submissions/6917100
+# https://atcoder.jp/contests/arc002/submissions/6923018
 days = [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
-def zeller(y, m, d):
+days_leap = [0, 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+def is_leap_year(y):  # 閏年判定
+    if y%400==0: return True
+    elif y%100==0: return False
+    elif y%4==0: return True
+    else: return False
+def zeller(y, m, d):  # ツェラーの公式
     # 土曜日 -> 0
     if m<=2:
         m += 12
@@ -174,10 +181,14 @@ def zeller(y, m, d):
     C, Y = divmod(y, 100)
     h = (d + 26*(m+1)//10 + Y + Y//4 + (-2*C+C//4)) % 7
     return h
-def md2d(m, d):
+def md2d(m, d):  # m 月 d 日は 0-indexed で何日目か？
     # 返り値は [0, 365)
     return sum(days[:m]) + d - 1
 def all_md():
     for m, ds in enumerate(days[1:], 1):
         for d in range(1, ds+1):
             yield m, d
+def all_ymd(y_start, y_end):
+    for y in range(y_start, y_end):
+        for m, d in all_md(days=days_leap if is_leap_year(y) else days):
+            yield y, m, d
