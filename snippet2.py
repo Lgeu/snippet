@@ -163,4 +163,21 @@ def more_pell_minus_solutions(n, x, y):
         yield x, y
     
 
-
+# カレンダー系
+# https://atcoder.jp/contests/arc010/submissions/6917100
+days = [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+def zeller(y, m, d):
+    # 土曜日 -> 0
+    if m<=2:
+        m += 12
+        y -= 1
+    C, Y = divmod(y, 100)
+    h = (d + 26*(m+1)//10 + Y + Y//4 + (-2*C+C//4)) % 7
+    return h
+def md2d(m, d):
+    # 返り値は [0, 365)
+    return sum(days[:m]) + d - 1
+def all_md():
+    for m, ds in enumerate(days[1:], 1):
+        for d in range(1, ds+1):
+            yield m, d
