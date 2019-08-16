@@ -95,7 +95,7 @@ class SegTreeIndex(object):
 
 class SegTree(object):
     # 区間の中で v 以下の値のうち最も左にある値と index を取得
-    # 普通のセグ木に get_threshold_left を加えただけ
+    # 普通のセグ木に get_threshold_left と get_threshold_left_all を加えただけ
     # 検証: https://atcoder.jp/contests/arc038/submissions/6933949 (全区間のみ)
     # 抽象化したい
     __slots__ = ["elem_size", "tree", "default", "op"]
@@ -124,7 +124,7 @@ class SegTree(object):
         return result
 
     def get_threshold_left(self, x, y, v):
-        # v 以下の値
+        # 区間 [x, y) 内で一番左の v 以下の値
         tree, result, op, elem_size = self.tree, self.default, self.op, self.elem_size
         l, r = x + elem_size, y + elem_size
         idx_left = idx_right = -1  # 内部 index
@@ -143,6 +143,18 @@ class SegTree(object):
         if idx_left==idx_right==-1:
             return -1, -1
         idx = idx_left if idx_left!=-1 else idx_right
+        while idx < elem_size:
+            idx <<= 1
+            if tree[idx] > v:
+                idx += 1
+        return tree[idx], idx-elem_size
+
+    def get_threshold_left_all(self, v):
+        # 全区間で一番左の v 以下の値
+        tree, op, elem_size = self.tree, self.op, self.elem_size
+        if tree[1] > v:
+            return -1, -1
+        idx = 1
         while idx < elem_size:
             idx <<= 1
             if tree[idx] > v:
