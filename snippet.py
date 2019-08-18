@@ -781,6 +781,16 @@ def convolve(A, B):
     AB[1, :b] = B
     return np.rint(ifft(fft(AB[0]) * fft(AB[1]))).astype(np.int64)[:n]
 
+def scc(E, n_vertex):
+    # 強連結成分分解  # E は [[a1, b1], [a2, b2], ... ] の形
+    # 返り値は 強連結成分の数 と 各頂点がどの強連結成分に属しているか
+    import numpy as np
+    from scipy.sparse import csr_matrix, csgraph
+    A, B = np.array(E).T
+    graph = csr_matrix((np.ones(len(E)), (A, B)), (n_vertex, n_vertex))
+    n_components, labels = csgraph.connected_components(graph, connection='strong')
+    return n_components, labels
+
 
 """
 # 入力10**6行あたり約70ms早くなる inputの遅いPyPyでは約180ms？（これ嘘っぽい）
