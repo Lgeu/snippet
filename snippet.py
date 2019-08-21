@@ -26,14 +26,14 @@ def modinv(a, mod=10**9+7):
     return pow(a, mod-2, mod)
 
 # nCr mod m
-# modinvが必要
 # rがn/2に近いと非常に重くなる
 def combination(n, r, mod=10**9+7):
-    r = min(r, n-r)
-    res = 1
-    for i in range(r):
-        res = res * (n - i) * modinv(i+1, mod) % mod
-    return res
+    n1, r = n+1, min(r, n-r)
+    numer = denom = 1
+    for i in range(1, r+1):
+        numer = numer * (n1-i) % mod
+        denom = denom * i % mod
+    return numer * pow(denom, mod-2, mod) % mod
 
 # nHr mod m
 def H(n, r, mod=10**9+7):
