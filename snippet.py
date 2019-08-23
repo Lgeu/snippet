@@ -791,13 +791,41 @@ def scc(E, n_vertex):
     n_components, labels = csgraph.connected_components(graph, connection='strong')
     return n_components, labels
 
+def distribute(n, person, min, max, mode="even"):
+    # n 個を person 人に分配する
+    # 返り値は [[a (個), a 個もらう人数], ...]
+    # 分配できないときは None を返す
+    if person==0 and n==0:
+        return []
+    elif not min*person <= n <= max*person:
+        return None
+    elif mode=="even":
+        q, m = divmod(n, person)
+        if m==0:
+            return [[q, person]]
+        else:
+            return [[q, person-m], [q+1, m]]
+    elif mode=="greedy":
+        if max==min:
+            return [[max, person]]
+        n -= min * person
+        q, m = divmod(n, max-min)
+        if m==0:
+            return [[min, person-q], [max, q]]
+        else:
+            return [[min, person-1-q], [min+m, 1], [max, q]]
+    else:
+        raise ValueError("'mode' must be 'even' or 'greedy'.")
+
 
 """
-# 入力10**6行あたり約70ms早くなる inputの遅いPyPyでは約180ms？（これ嘘っぽい）
+A = csgraph.dijkstra(X, indices=0)
+
+https://github.com/Lgeu/snippet/
 import sys
+input = sys.stdin.readline
 def input():
     return sys.stdin.readline()[:-1]
-input = sys.stdin.readline
 
 from functools import lru_cache
 @lru_cache(maxsize=None)  # メモ化再帰したい関数の前につける
