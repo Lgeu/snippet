@@ -811,6 +811,18 @@ def distribute(n, person, min, max, mode="even"):
     else:
         raise ValueError("'mode' must be 'even' or 'greedy'.")
 
+def is_odd_permutation(A):
+    # [0, N) の順列が奇置換であるかを返す
+    # 参考: https://atcoder.jp/contests/chokudai_S001/submissions/5745441
+    A_ = A[:]
+    res = 0
+    for idx in range(len(A)):
+        a = A_[idx]
+        while a != idx:
+            A_[idx], A_[a] = A_[a], A_[idx]
+            res += 1
+            a = A_[idx]
+    return res % 2
 
 """
 A = csgraph.dijkstra(X, indices=0)
