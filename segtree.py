@@ -39,7 +39,7 @@ class SegmentTree(object):
 
 class SegTreeIndex(object):
     # 区間の最小 or 最大値とその index を取得
-    # 未検証
+    # 検証: https://yukicoder.me/submissions/376308
     __slots__ = ["elem_size", "tree", "default", "op", "index", "op2"]
     def __init__(self, a: list, default=float("inf"), op=min, op2=lambda a,b:a>b):
         # 同じ場合最左のインデックスを返す
@@ -75,7 +75,7 @@ class SegTreeIndex(object):
                 v1, v2 = tree[r], result
                 result = op(v1, v2)
                 if op2(v1, v2)==0:
-                    idx = index[l]
+                    idx = index[r]
             l, r = l >> 1, r >> 1
         return result, idx
 
