@@ -824,6 +824,16 @@ def is_odd_permutation(A):
             a = A_[idx]
     return res % 2
 
+def xorshift(seed=42):
+    y = seed
+    def randint(a, b):  # 閉区間
+        nonlocal y
+        y ^= y << 13 & 0xffffffff
+        y ^= y >> 17
+        y ^= y << 5 & 0xffffffff
+        return y % (b-a+1) + a
+    return randint
+
 """
 A = csgraph.dijkstra(X, indices=0)
 
