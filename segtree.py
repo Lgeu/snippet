@@ -36,6 +36,11 @@ class SegmentTree(object):
             i >>= 1
             tree[i] = op(tree[i << 1], tree[(i << 1) + 1])
 
+# モノイドの元として (index, value) を使うと index も取得できるようになる
+seg = SegmentTree(list(enumerate(A)),
+                  (-1, float("inf")),
+                  lambda x, y: x if x[1]<y[1] else y)
+
 
 class SegTreeIndex(object):
     # 区間の最小 or 最大値とその index を取得
