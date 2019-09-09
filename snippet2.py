@@ -192,3 +192,95 @@ def all_ymd(y_start, y_end):
     for y in range(y_start, y_end):
         for m, d in all_md(days=days_leap if is_leap_year(y) else days):
             yield y, m, d
+
+
+class Factoradic:
+    # 階乗進数
+    # n (0-indexed) 桁目は n+1 進法、すなわち n 桁目の数字は [0, n] の範囲
+    # n 桁目の 1 は n! を表す
+    # 検証: https://atcoder.jp/contests/arc047/submissions/7436530
+    factorial = [1]
+    def __init__(self, a):
+        self.value = value = []  # 下の位から入れていく
+        if isinstance(a, int):
+            n = 1
+            while a:
+                a, m = divmod(a, n)
+                value.append(m)
+                n += 1
+        elif hasattr(a, "__iter__"):
+            self.value = list(a)
+        else:
+            raise TypeError
+
+    def __int__(self):
+        res = 0
+        f = 1
+        for i, v in enumerate(self.value[1:], 1):
+            f *= i
+            res += v * f
+        return res
+
+    def _set_factorial(self, val):
+        factorial = Factoradic.factorial
+        n = len(factorial)
+        f = factorial[-1]
+        while f < val:
+            f *= n
+            factorial.append(f)
+            n += 1
+
+    def to_permutation(self, d):
+        # [0, d) の順列のうち、辞書順 self 番目 (0_indexed) のものを返す
+        # self >= d! の場合は、self mod d! 番目のものを返す
+        # O(d log d)
+        value = self.value
+        value += [0] * (d-len(value))
+        res = []
+        n = 1 << d.bit_length()
+        bit = [i&-i for i in range(n)]  # BIT を 1 で初期化 (1-indexed)
+        for v in value[d-1::-1]:
+            i, step = 0, n>>1
+            while step:  # BIT 上の二分探索
+                if bit[i+step] <= v:
+                    i += step
+                    v -= bit[i]
+                else:
+                    bit[i+step] -= 1  # 減算も同時に行う
+                step >>= 1
+            res.append(i)  # i 要素目までの累積和が v 以下になる最大の i
+        return res
+
+    def __isub__(self, other):  # other は Factoradic 型
+        value = self.value
+        value_ = other.value
+        value += [0] * (len(value_)-len(value))
+        m = 0  # 繰り下がり
+        for i, v in enumerate(value_[1:]+[0]*(len(value)-len(value_)), 1):
+            value[i] -= v + m
+            if value[i] < 0:
+                value[i] += i + 1
+                m = 1
+            else:
+                m = 0
+        if m==1:
+            assert False
+        return self
+
+    def __ifloordiv__(self, other):  # other は int 型
+        value = self.value
+        m = 0
+        for n in range(len(value)-1, -1, -1):
+            v = value[n] + m
+            value[n], m = divmod(v, other)
+            m *= n
+        return self
+
+
+
+
+
+
+
+
+
