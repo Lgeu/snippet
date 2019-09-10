@@ -834,6 +834,16 @@ def xorshift(seed=42):
         return y % (b-a+1) + a
     return randint
 
+def rec2(x, y, a0, n, mod):
+    # 二項間漸化式 a_n = x * a_{n-1} + y
+    a = a0
+    while n:
+        n, m = divmod(n, 2)
+        if m:
+            a = (a * x + y) % mod
+        x, y = x * x % mod, (x * y + y) % mod
+    return a
+
 """
 A = csgraph.dijkstra(X, indices=0)
 
