@@ -775,6 +775,19 @@ def convolve(A, B):
     AB[1, :b] = B
     return np.rint(ifft(fft(AB[0]) * fft(AB[1]))).astype(np.int64)[:n]
 
+def garner(A, M, mod):
+    # Garner のアルゴリズム
+    # 参考: https://math314.hateblo.jp/entry/2015/05/07/014908
+    M.append(mod)
+    coffs = [1] * len(M)
+    constants = np.zeros((len(M),)+A[0].shape, dtype=np.int64)
+    for i, (a, m) in enumerate(zip(A, M[:-1])):
+        v = (a - constants[i]) * pow(coffs[i], m-2, m) % m
+        for j, mm in enumerate(M[i+1:], i+1):
+            constants[j] = (constants[j] + coffs[j] * v) % mm
+            coffs[j] = coffs[j] * m % mm
+    return constants[-1]
+
 def scc(E, n_vertex):
     # 強連結成分分解  # E は [[a1, b1], [a2, b2], ... ] の形
     # 返り値は 強連結成分の数 と 各頂点がどの強連結成分に属しているか
