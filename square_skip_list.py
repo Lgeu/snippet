@@ -3,7 +3,7 @@ class SquareSkipList:
     # SkipList の層数を 2 にした感じの何か
     # std::multiset の代用になる
     # 検証1 (add, pop) データ構造: https://atcoder.jp/contests/arc033/submissions/7480578
-    # 検証2 (init, add, remove, search_higher_equal) Exclusive OR Queries: https://atcoder.jp/contests/cpsco2019-s1/submissions/7483791
+    # 検証2 (init, add, remove, search_higher_equal) Exclusive OR Queries: https://atcoder.jp/contests/cpsco2019-s1/submissions/7484086
     # 検証3 (add, search_higher, search_lower) Second Sum: https://atcoder.jp/contests/abc140/submissions/7483678
     def __init__(self, values=None, sorted_=False, square=1000, seed=42):
         # values: 初期値のリスト
@@ -21,7 +21,7 @@ class SquareSkipList:
             self.layer0 = layer0 = []
             if not sorted_:
                 values.sort()
-            rand_depth = self.rand_depth
+            rand_depth = self._rand_depth
             l0 = []
             for v in values:
                 if rand_depth():
@@ -33,7 +33,7 @@ class SquareSkipList:
             layer0.append(l0)
         self.layer1.append(inf)
 
-    def rand_depth(self):  # 32bit xorshift
+    def _rand_depth(self):  # 32bit xorshift
         y = self.rand_y
         y ^= y << 13 & 0xffffffff
         y ^= y >> 17
@@ -43,7 +43,7 @@ class SquareSkipList:
 
     def add(self, x):  # 要素の追加  # O(sqrt(n))
         layer1, layer0 = self.layer1, self.layer0
-        if self.rand_depth():
+        if self._rand_depth():
             idx1 = bisect_right(layer1, x)
             layer1.insert(idx1, x)
             layer0_idx1 = layer0[idx1]
@@ -55,15 +55,16 @@ class SquareSkipList:
             insort_right(layer0[idx1], x)
 
     def remove(self, x):  # 要素の削除  # O(sqrt(n))
+        # x が存在しない場合、x 以上の最小の要素が削除される
         layer1, layer0 = self.layer1, self.layer0
         idx1 = bisect_left(layer1, x)
-        if layer1[idx1] == x:
+        layer0_idx1 = layer0[idx1]
+        idx0 = bisect_left(layer0_idx1, x)
+        if idx0 == len(layer0_idx1):
             del layer1[idx1]
-            layer0[idx1] += layer0[idx1+1]
-            del layer0[idx1+1]
+            layer0[idx1] += layer0.pop(idx1+1)
         else:
-            layer0_idx1 = layer0[idx1]
-            del layer0_idx1[bisect_left(layer0_idx1, x)]
+            del layer0_idx1[idx0]
 
     def search_higher_equal(self, x):  # x 以上の最小の値を返す  O(log(n))
         layer1, layer0 = self.layer1, self.layer0
@@ -95,7 +96,7 @@ class SquareSkipList:
     def pop(self, idx):
         # 小さい方から idx 番目の要素を削除してその要素を返す（0-indexed）
         # O(sqrt(n))
-        # for を回すので重め  使うなら square パラメータを大きめにするべき
+        # for を回すので重め、使うなら square パラメータを大きめにするべき
         layer1, layer0 = self.layer1, self.layer0
         s = -1
         for i, l0 in enumerate(layer0):
