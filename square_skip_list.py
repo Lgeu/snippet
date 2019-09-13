@@ -3,8 +3,8 @@ class SquareSkipList:
     # SkipList の層数を 2 にした感じの何か
     # std::multiset の代用になる
     # 検証1 (add, pop) データ構造: https://atcoder.jp/contests/arc033/submissions/7480578
-    # 検証2 (init, add, remove, search_higher_equal) Exclusive OR Queries: https://atcoder.jp/contests/cpsco2019-s1/submissions/7485749
-    # 検証3 (add, search_higher, search_lower) Second Sum: https://atcoder.jp/contests/abc140/submissions/7485479
+    # 検証2 (init, add, remove, search_higher_equal) Exclusive OR Queries: https://atcoder.jp/contests/cpsco2019-s1/submissions/7488225
+    # 検証3 (add, search_higher, search_lower) Second Sum: https://atcoder.jp/contests/abc140/submissions/7488469
     def __init__(self, values=None, sorted_=False, square=1000, seed=42):
         # values: 初期値のリスト
         # sorted_: 初期値がソート済みであるか
@@ -38,8 +38,6 @@ class SquareSkipList:
             self.rand_y = y
 
     def add(self, x):  # 要素の追加  # O(sqrt(n))
-        layer1, layer0 = self.layer1, self.layer0
-
         # xorshift
         y = self.rand_y
         y ^= (y & 0x7ffff) << 13
@@ -48,6 +46,7 @@ class SquareSkipList:
         self.rand_y = y
 
         if y % self.square == 0:
+            layer1, layer0 = self.layer1, self.layer0
             idx1 = bisect_right(layer1, x)
             layer1.insert(idx1, x)
             layer0_idx1 = layer0[idx1]
@@ -55,46 +54,42 @@ class SquareSkipList:
             layer0.insert(idx1+1, layer0_idx1[idx0:])  # layer0 は dict で管理した方が良いかもしれない  # dict 微妙だった
             del layer0_idx1[idx0:]
         else:
-            idx1 = bisect_right(layer1, x)
-            insort_right(layer0[idx1], x)
+            idx1 = bisect_right(self.layer1, x)
+            insort_right(self.layer0[idx1], x)
 
     def remove(self, x):  # 要素の削除  # O(sqrt(n))
         # x が存在しない場合、x 以上の最小の要素が削除される
-        layer1, layer0 = self.layer1, self.layer0
-        idx1 = bisect_left(layer1, x)
-        layer0_idx1 = layer0[idx1]
+        idx1 = bisect_left(self.layer1, x)
+        layer0_idx1 = self.layer0[idx1]
         idx0 = bisect_left(layer0_idx1, x)
         if idx0 == len(layer0_idx1):
-            del layer1[idx1]
-            layer0[idx1] += layer0.pop(idx1+1)
+            del self.layer1[idx1]
+            self.layer0[idx1] += self.layer0.pop(idx1+1)
         else:
             del layer0_idx1[idx0]
 
     def search_higher_equal(self, x):  # x 以上の最小の値を返す  O(log(n))
-        layer1, layer0 = self.layer1, self.layer0
-        idx1 = bisect_left(layer1, x)
-        layer0_idx1 = layer0[idx1]
+        idx1 = bisect_left(self.layer1, x)
+        layer0_idx1 = self.layer0[idx1]
         idx0 = bisect_left(layer0_idx1, x)
         if idx0 == len(layer0_idx1):
-            return layer1[idx1]
+            return self.layer1[idx1]
         return layer0_idx1[idx0]
 
     def search_higher(self, x):  # x を超える最小の値を返す  O(log(n))
-        layer1, layer0 = self.layer1, self.layer0
-        idx1 = bisect_right(layer1, x)
-        layer0_idx1 = layer0[idx1]
+        idx1 = bisect_right(self.layer1, x)
+        layer0_idx1 = self.layer0[idx1]
         idx0 = bisect_right(layer0_idx1, x)
         if idx0 == len(layer0_idx1):
-            return layer1[idx1]
+            return self.layer1[idx1]
         return layer0_idx1[idx0]
 
     def search_lower(self, x):  # x 未満の最大の値を返す  O(log(n))
-        layer1, layer0 = self.layer1, self.layer0
-        idx1 = bisect_left(layer1, x)
-        layer0_idx1 = layer0[idx1]
+        idx1 = bisect_left(self.layer1, x)
+        layer0_idx1 = self.layer0[idx1]
         idx0 = bisect_left(layer0_idx1, x)
         if idx0 == 0:  # layer0_idx1 が空の場合とすべて x 以上の場合
-            return layer1[idx1-1]
+            return self.layer1[idx1-1]
         return layer0_idx1[idx0-1]
 
     def pop(self, idx):
