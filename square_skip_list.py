@@ -2,7 +2,7 @@ from bisect import bisect_left, bisect_right, insort_right
 class SquareSkipList:
     # SkipList の層数を 2 にした感じの何か
     # std::multiset の代用になる
-    # 検証1 (add, pop) データ構造: https://atcoder.jp/contests/arc033/submissions/7480578
+    # 検証1 (add, pop) データ構造: https://atcoder.jp/contests/arc033/submissions/7488620
     # 検証2 (init, add, remove, search_higher_equal) Exclusive OR Queries: https://atcoder.jp/contests/cpsco2019-s1/submissions/7488225
     # 検証3 (add, search_higher, search_lower) Second Sum: https://atcoder.jp/contests/abc140/submissions/7488469
     def __init__(self, values=None, sorted_=False, square=1000, seed=42):
@@ -96,16 +96,15 @@ class SquareSkipList:
         # 小さい方から idx 番目の要素を削除してその要素を返す（0-indexed）
         # O(sqrt(n))
         # for を回すので重め、使うなら square パラメータを大きめにするべき
-        layer1, layer0 = self.layer1, self.layer0
+        layer0 = self.layer0
         s = -1
         for i, l0 in enumerate(layer0):
             s += len(l0) + 1
             if s >= idx:
                 break
         if s==idx:
-            layer0[i] += layer0[i+1]
-            del layer0[i+1]
-            return layer1.pop(i)
+            layer0[i] += layer0.pop(i+1)
+            return self.layer1.pop(i)
         else:
             return layer0[i].pop(idx-s)
 
