@@ -3,7 +3,7 @@ class SquareSkipList:
     # SkipList の層数を 2 にした感じの何か
     # std::multiset の代用になる
     # 検証1 (add, pop) データ構造: https://atcoder.jp/contests/arc033/submissions/7480578
-    # 検証2 (init, add, remove, search_higher_equal) Exclusive OR Queries: https://atcoder.jp/contests/cpsco2019-s1/submissions/7485446
+    # 検証2 (init, add, remove, search_higher_equal) Exclusive OR Queries: https://atcoder.jp/contests/cpsco2019-s1/submissions/7485749
     # 検証3 (add, search_higher, search_lower) Second Sum: https://atcoder.jp/contests/abc140/submissions/7485479
     def __init__(self, values=None, sorted_=False, square=1000, seed=42):
         # values: 初期値のリスト
@@ -11,9 +11,9 @@ class SquareSkipList:
         # square: 最大データ数の平方根
         # seed: 乱数のシード
         inf = float("inf")
-        self.rand_y = seed
         self.square = square
         if values is None:
+            self.rand_y = seed
             self.layer1 = [inf]
             self.layer0 = [[]]
         else:
@@ -24,11 +24,9 @@ class SquareSkipList:
             y = seed
             l0 = []
             for v in values:
-                y = self.rand_y
                 y ^= y << 13 & 0xffffffff
                 y ^= y >> 17
                 y ^= y << 5 & 0xffffffff
-                self.rand_y = y
                 if y % square == 0:
                     layer0.append(l0)
                     l0 = []
@@ -119,3 +117,4 @@ class SquareSkipList:
     def print(self):
         print(self.layer1)
         print(self.layer0)
+
