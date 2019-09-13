@@ -3,8 +3,8 @@ class SquareSkipList:
     # SkipList の層数を 2 にした感じの何か
     # std::multiset の代用になる
     # 検証1 (add, pop) データ構造: https://atcoder.jp/contests/arc033/submissions/7480578
-    # 検証2 (init, add, remove, search_higher_equal) Exclusive OR Queries: https://atcoder.jp/contests/cpsco2019-s1/submissions/7484086
-    # 検証3 (add, search_higher, search_lower) Second Sum: https://atcoder.jp/contests/abc140/submissions/7483678
+    # 検証2 (init, add, remove, search_higher_equal) Exclusive OR Queries: https://atcoder.jp/contests/cpsco2019-s1/submissions/7485446
+    # 検証3 (add, search_higher, search_lower) Second Sum: https://atcoder.jp/contests/abc140/submissions/7485479
     def __init__(self, values=None, sorted_=False, square=1000, seed=42):
         # values: 初期値のリスト
         # sorted_: 初期値がソート済みであるか
@@ -14,36 +14,42 @@ class SquareSkipList:
         self.rand_y = seed
         self.square = square
         if values is None:
-            self.layer1 = []
+            self.layer1 = [inf]
             self.layer0 = [[]]
         else:
             self.layer1 = layer1 = []
             self.layer0 = layer0 = []
             if not sorted_:
                 values.sort()
-            rand_depth = self._rand_depth
+            y = seed
             l0 = []
             for v in values:
-                if rand_depth():
+                y = self.rand_y
+                y ^= y << 13 & 0xffffffff
+                y ^= y >> 17
+                y ^= y << 5 & 0xffffffff
+                self.rand_y = y
+                if y % square == 0:
                     layer0.append(l0)
                     l0 = []
                     layer1.append(v)
                 else:
                     l0.append(v)
+            layer1.append(inf)
             layer0.append(l0)
-        self.layer1.append(inf)
+            self.rand_y = y
 
-    def _rand_depth(self):  # 32bit xorshift
+    def add(self, x):  # 要素の追加  # O(sqrt(n))
+        layer1, layer0 = self.layer1, self.layer0
+
+        # xorshift
         y = self.rand_y
         y ^= y << 13 & 0xffffffff
         y ^= y >> 17
         y ^= y << 5 & 0xffffffff
         self.rand_y = y
-        return y % self.square == 0
 
-    def add(self, x):  # 要素の追加  # O(sqrt(n))
-        layer1, layer0 = self.layer1, self.layer0
-        if self._rand_depth():
+        if y % self.square == 0:
             idx1 = bisect_right(layer1, x)
             layer1.insert(idx1, x)
             layer0_idx1 = layer0[idx1]
@@ -113,4 +119,3 @@ class SquareSkipList:
     def print(self):
         print(self.layer1)
         print(self.layer0)
-
