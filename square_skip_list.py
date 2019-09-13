@@ -24,9 +24,9 @@ class SquareSkipList:
             y = seed
             l0 = []
             for v in values:
-                y ^= y << 13 & 0xffffffff
+                y ^= (y & 0x7ffff) << 13
                 y ^= y >> 17
-                y ^= y << 5 & 0xffffffff
+                y ^= (y & 0x7ffffff) << 5
                 if y % square == 0:
                     layer0.append(l0)
                     l0 = []
@@ -42,9 +42,9 @@ class SquareSkipList:
 
         # xorshift
         y = self.rand_y
-        y ^= y << 13 & 0xffffffff
+        y ^= (y & 0x7ffff) << 13
         y ^= y >> 17
-        y ^= y << 5 & 0xffffffff
+        y ^= (y & 0x7ffffff) << 5
         self.rand_y = y
 
         if y % self.square == 0:
@@ -52,7 +52,7 @@ class SquareSkipList:
             layer1.insert(idx1, x)
             layer0_idx1 = layer0[idx1]
             idx0 = bisect_right(layer0_idx1, x)
-            layer0.insert(idx1+1, layer0_idx1[idx0:])  # layer0 は dict で管理した方が良いかもしれない
+            layer0.insert(idx1+1, layer0_idx1[idx0:])  # layer0 は dict で管理した方が良いかもしれない  # dict 微妙だった
             del layer0_idx1[idx0:]
         else:
             idx1 = bisect_right(layer1, x)
