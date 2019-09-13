@@ -4,7 +4,7 @@ class SquareSkipList:
     # std::multiset の代用になる
     # 検証1 (データ構造): https://atcoder.jp/contests/arc033/submissions/7480578
     # 検証2 (Exclusive OR Queries): https://atcoder.jp/contests/cpsco2019-s1/submissions/7479914
-    # 検証3 (Second Sum): https://atcoder.jp/contests/abc140/submissions/7480312
+    # 検証3 (Second Sum): https://atcoder.jp/contests/abc140/submissions/7482046
     def __init__(self, values=None, sorted_=False, square=1000, seed=42):
         # values: 初期値のリスト
         # sorted_: 初期値がソート済みであるか
@@ -98,20 +98,13 @@ class SquareSkipList:
     def search_lower(self, x):  # x 未満の最大の値を返す  O(log(n))
         layer1, layer0 = self.layer1, self.layer0
         idx1 = bisect_left(layer1, x)
-        res = layer1[idx1]
         layer0_idx1 = layer0[idx1]
-        if res != x:  # res > x
-            if layer0_idx1:
-                idx0 = bisect_left(layer0_idx1, x)
-                if idx0 != 0:
-                    return layer0_idx1[idx0-1]
-            return layer1[idx1-1]  # layer0_idx1 が空の場合とすべて x 以上の場合
+        idx0 = bisect_left(layer0_idx1, x)
+        if idx0 == 0:  # layer0_idx1 が空の場合とすべて x 以上の場合
+            return layer1[idx1-1]
         else:
-            idx0 = bisect_left(layer0_idx1, x)
-            if idx0 == 0:  # layer0_idx1 が空の場合とすべて res で埋まっている場合
-                return layer1[idx1-1]
-            else:
-                return layer0_idx1[idx0-1]
+            return layer0_idx1[idx0-1]
+
 
     def pop(self, idx):
         # 小さい方から idx 番目の要素を削除してその要素を返す（0-indexed）
