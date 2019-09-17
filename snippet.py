@@ -857,6 +857,76 @@ def rec2(x, y, a0, n, mod):
         x, y = x * x % mod, (x * y + y) % mod
     return a
 
+class Polynomial:
+    # 多項式
+    def __init__(self, coef, mod=10**9+7):
+        # 降べきの順
+        self.coef = coef
+        self.mod = mod
+
+    def __repr__(self):
+        return str(self.coef)
+
+    def __add__(self, other):
+        from itertools import zip_longest
+        coef1, coef2, mod = self.coef, other.coef, self.mod
+        res = [(c1 + c2) % mod for c1, c2 in zip_longest(coef1[::-1], coef2[::-1], fillvalue=0)]
+        while len(res) > 0 and res[-1] == 0:
+            del res[-1]
+        res.reverse()
+        return Polynomial(res, mod=mod)
+
+    def __mul__(self, other):
+        if isinstance(other, int):
+            other = Polynomial([other])
+        coef1, coef2, mod = self.coef, other.coef, self.mod
+        res = [0] * (len(coef1) + len(coef2) - 1)
+        for i, c1 in enumerate(coef1):
+            for j, c2 in enumerate(coef2, i):
+                res[j] = (res[j] + c1 * c2) % mod
+        return Polynomial(res, mod=mod)
+
+    def __divmod__(self, other):
+        coef1, coef2, mod = self.coef[:], other.coef, self.mod
+        assert coef2[0] == 1
+        quotient = []
+        n = len(coef1) - len(coef2) + 1
+        if n < 0:
+            return Polynomial([], mod=mod), Polynomial(coef1, mod=mod)
+        for i in range(n):
+            r = coef1[i]
+            quotient.append(r)
+            for j, c2 in enumerate(coef2, i):  # enumerate(coef2[1:], i+1) でもいい
+                coef1[j] = (coef1[j] - r * c2) % mod
+        return Polynomial(quotient, mod=mod), Polynomial(coef1[n:], mod=mod)
+
+    def __imod__(self, other):
+        coef1, coef2, mod = self.coef, other.coef, self.mod
+        n = len(coef1) - len(coef2) + 1
+        if n < 0:
+            return self
+        for i in range(n):
+            r = coef1[i]
+            for j, c2 in enumerate(coef2, i):
+                coef1[j] = (coef1[j] - r * c2) % mod
+        self.coef = coef1[n:]
+        return self
+
+def kitamasa(C, n, mod=10**9+7):
+    # C: 係数（a_n = C[0] * a_{n-1} + C[1] * a{n-2} + ...）
+    # n: 一番小さい初期値が a_i で求めたい項が a_j なら j-k
+    Q = Polynomial([1] + [-c for c in C], mod=mod)
+    res = Polynomial([1], mod=mod)
+    X = Polynomial([1, 0], mod=mod)
+    while n:
+        n, r = divmod(n, 2)
+        if r:
+            res = res * X
+            res %= Q
+        X = X * X
+        X %= Q
+    return res.coef
+
 """
 A = csgraph.dijkstra(X, indices=0)
 
