@@ -115,54 +115,24 @@ def prime_decomposition(n):
         table.append(n)
     return table
 
-
-def miller_rabin(n, t=10):
-    # http://tjkendev.github.io/procon-library/python/prime/probabilistic.html
+def miller_rabin(n):
+    # 参考: http://tjkendev.github.io/procon-library/python/prime/probabilistic.html
     # 確率的素数判定（ミラーラビン素数判定法）
-    # 素数なら確実に 1 を返す、合成数なら確率的に 0 を返す
-    # 1 が返ったなら恐らく素数で、0 が返ったなら確実に合成数である
-    # t が多いほど精度が良い
-    import random
-    if n==2: return 1
-    if n==1 or n&1==0: return 0
-    d = n-1
+    # 素数なら確実に True を返す、合成数なら確率的に False を返す
+    # True が返ったなら恐らく素数で、False が返ったなら確実に合成数である
+    primes = [2, 7, 61]  # 64bit: [3, 5, 7, 11, 13, 17, 19, 23]
+    if n in primes: return True
+    if n<=1 or n&1==0: return False
+    d = m1 = n-1
     d //= d & -d
-    for _ in range(t):
-        a = random.randint(1, n-1)
+    for a in primes:
         t = d
         y = pow(a, t, n)
-        while t!=n-1 and y!=1 and y!=n-1:
-            y = y**2 % n
+        while t!=m1 and y!=1 and y!=m1:
+            y = y * y % n
             t <<= 1
-        if y!=n-1 and t&1==0: return 0
-    return 1
-
-# 転倒数
-def mergecount(A):
-    cnt = 0
-    n = len(A)
-    if n>1:
-        A1 = A[:n>>1]
-        A2 = A[n>>1:]
-        cnt += mergecount(A1)
-        cnt += mergecount(A2)
-        i1=0
-        i2=0
-        for i in range(n):
-            if i2 == len(A2):
-                A[i] = A1[i1]
-                i1 += 1
-            elif i1 == len(A1):
-                A[i] = A2[i2]
-                i2 += 1
-            elif A1[i1] <= A2[i2]:
-                A[i] = A1[i1]
-                i1 += 1
-            else:
-                A[i] = A2[i2]
-                i2 += 1
-                cnt += n//2 - i1
-    return cnt
+        if y!=m1 and t&1==0: return False
+    return True
 
 # Binary Indexed Tree
 """
