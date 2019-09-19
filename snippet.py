@@ -897,6 +897,72 @@ def kitamasa(C, n, mod=10**9+7):
         X %= Q
     return res.coef
 
+class MaxClique:
+    # 最大クリーク
+    # 参考: https://atcoder.jp/contests/code-thanks-festival-2017-open/submissions/2691674
+    # 検証: https://atcoder.jp/contests/code-thanks-festival-2017-open/submissions/7611241
+    # 誰のアルゴリズムかわからない…アルゴリズムの正当性もわからない…
+    def __init__(self, n):
+        self.n = n
+        self.E = [0] * n
+        self.stk = [0] * n  # 最大クリークが入るスタック
+
+    def __repr__(self):
+        return "\n".join("{:0{}b}".format(e, self.n) for e in self.E)
+
+    def add_edge(self, v, u):
+        self.E[v] |= 1 << u
+        self.E[u] |= 1 << v
+
+    def invert(self):
+        # 補グラフにする
+        n, E = self.n, self.E
+        for i in range(n):
+            E[i] = ~E[i] & (1<<n)-1  # 正の数にしないと popcount がバグる
+            E[i] ^= 1 << i  # 自己ループがあるとバグる
+
+    def solve(self):
+        n, E = self.n, self.E
+        deg = [bin(v).count("1") for v in E]
+        self.index = index = sorted(range(n), key=lambda x: deg[x], reverse=True)  # 頂点番号を次数の降順にソート
+        self.E_sorted = E_sorted = []  # E を 次数の降順に並び替えたもの
+        for v in index:
+            E_sorted_ = 0
+            E_v = E[v]
+            for i, u in enumerate(index):
+                if E_v >> u & 1:
+                    E_sorted_ |= 1 << i
+            E_sorted.append(E_sorted_)
+        cand = (1 << n) - 1  # 候補の集合
+        self.cans = 1  # 最大クリークを構成する集合
+        self.ans = 1
+        self._dfs(0, cand)
+        return self.ans
+
+    def _dfs(self, elem_num, candi):
+        if self.ans < elem_num:
+            self.ans = elem_num
+            cans_ = 0
+            index = self.index
+            for s in self.stk[:elem_num]:
+                cans_ |= 1 << index[s]
+            self.cans = cans_
+        potential = elem_num + bin(candi).count("1")
+        if potential <= self.ans:
+            return
+        E_sorted = self.E_sorted
+        pivot = candi & -candi  # 候補から頂点をひとつ取り出す
+        smaller_candi = candi & ~E_sorted[pivot.bit_length()-1]  # pivot と直接結ばれていない頂点の集合（自己ループの無いグラフなので pivot を含む）
+        while smaller_candi and potential > self.ans:
+            next = smaller_candi & -smaller_candi
+            candi ^= next
+            smaller_candi ^= next
+            potential -= 1
+            next_ = next.bit_length()-1
+            if next == pivot or (smaller_candi & E_sorted[next_]):
+                self.stk[elem_num] = next_
+                self._dfs(elem_num + 1, candi & E_sorted[next_])
+
 """
 A = csgraph.dijkstra(X, indices=0)
 
