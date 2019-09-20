@@ -116,18 +116,19 @@ def prime_decomposition(n):
     return table
 
 def miller_rabin(n):
-    # 参考: http://tjkendev.github.io/procon-library/python/prime/probabilistic.html
     # 確率的素数判定（ミラーラビン素数判定法）
     # 素数なら確実に True を返す、合成数なら確率的に False を返す
     # True が返ったなら恐らく素数で、False が返ったなら確実に合成数である
-    primes = [2, 7, 61]  # 64bit: [3, 5, 7, 11, 13, 17, 19, 23]
-    if n in primes: return True
+    # 参考: http://tjkendev.github.io/procon-library/python/prime/probabilistic.html
+    # 検証: https://yukicoder.me/submissions/381948
+    primes = [2, 325, 9375, 28178, 450775, 9780504, 1795265022]  # 32bit: [2, 7, 61]
+    if n==2: return True
     if n<=1 or n&1==0: return False
     d = m1 = n-1
     d //= d & -d
     for a in primes:
-        t = d
-        y = pow(a, t, n)
+        if a >= n: return True
+        t, y = d, pow(a, d, n)
         while t!=m1 and y!=1 and y!=m1:
             y = y * y % n
             t <<= 1
