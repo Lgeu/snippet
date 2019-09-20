@@ -900,8 +900,8 @@ def kitamasa(C, n, mod=10**9+7):
 class MaxClique:
     # 最大クリーク
     # 参考: https://atcoder.jp/contests/code-thanks-festival-2017-open/submissions/2691674
-    # 検証: https://atcoder.jp/contests/code-thanks-festival-2017-open/submissions/7611241
-    # 誰のアルゴリズムかわからない…アルゴリズムの正当性もわからない…
+    # 検証: https://atcoder.jp/contests/code-thanks-festival-2017-open/submissions/7620028
+    # Bron–Kerbosch algorithm (O(1.4422^|V|)) の枝刈りをしたもの
     def __init__(self, n):
         self.n = n
         self.E = [0] * n
@@ -911,15 +911,16 @@ class MaxClique:
         return "\n".join("{:0{}b}".format(e, self.n) for e in self.E)
 
     def add_edge(self, v, u):
+        # assert v != u
         self.E[v] |= 1 << u
         self.E[u] |= 1 << v
 
     def invert(self):
         # 補グラフにする
         n, E = self.n, self.E
+        mask = (1<<n) - 1  # 正の数にしないと popcount がバグる
         for i in range(n):
-            E[i] = ~E[i] & (1<<n)-1  # 正の数にしないと popcount がバグる
-            E[i] ^= 1 << i  # 自己ループがあるとバグる
+            E[i] = ~E[i] & (mask ^ 1<<i)  # 自己ループがあるとバグる
 
     def solve(self):
         n, E = self.n, self.E
@@ -951,17 +952,17 @@ class MaxClique:
         if potential <= self.ans:
             return
         E_sorted = self.E_sorted
-        pivot = candi & -candi  # 候補から頂点をひとつ取り出す
-        smaller_candi = candi & ~E_sorted[pivot.bit_length()-1]  # pivot と直接結ばれていない頂点の集合（自己ループの無いグラフなので pivot を含む）
+        pivot = (candi & -candi).bit_length() - 1  # 候補から頂点をひとつ取り出す
+        smaller_candi = candi & ~E_sorted[pivot]  # pivot と直接結ばれていない頂点の集合（自己ループの無いグラフなので pivot を含む）
         while smaller_candi and potential > self.ans:
             next = smaller_candi & -smaller_candi
             candi ^= next
             smaller_candi ^= next
             potential -= 1
-            next_ = next.bit_length()-1
-            if next == pivot or (smaller_candi & E_sorted[next_]):
-                self.stk[elem_num] = next_
-                self._dfs(elem_num + 1, candi & E_sorted[next_])
+            next = next.bit_length() - 1
+            if next == pivot or smaller_candi & E_sorted[next]:
+                self.stk[elem_num] = next
+                self._dfs(elem_num + 1, candi & E_sorted[next])
 
 """
 A = csgraph.dijkstra(X, indices=0)
