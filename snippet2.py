@@ -292,10 +292,16 @@ class Factoradic:
         return self
 
 
+# リスト埋め込み用  # AtCoder なら 50000 要素くらいは埋め込める  # 圧縮率が高ければそれ以上も埋め込める
+def encode_list(lst):
+    import array, gzip, base64
+    int32 = "l" if array.array("l").itemsize == 4 else "i"
+    return base64.b64encode(gzip.compress(array.array(int32, lst)))
 
-
-
-
+def decode_list(lst):
+    import array, gzip, base64
+    int32 = "l" if array.array("l").itemsize == 4 else "i"
+    return array.array(int32, gzip.decompress(base64.b64decode(lst)))
 
 
 
