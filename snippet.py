@@ -145,6 +145,26 @@ def prime_decomposition(n):
         table.append(n)
     return table
 
+class Osa_k:
+    def __init__(self, n_max):
+        self.min_factor = min_factor = list(range(n_max+1))
+        for i in range(2, int(n_max**0.5)+1):
+            if min_factor[i] == i:
+                for j in range(i*i, n_max+1, i):
+                    if min_factor[j] == j:
+                        min_factor[j] = i
+
+    def __call__(self, n):
+        min_factor = self.min_factor
+        n_twoes = (n & -n).bit_length() - 1  # 最悪ケースでは速くなる
+        res = [2] * n_twoes
+        n >>= n_twoes
+        while n > 1:
+            p = min_factor[n]
+            res.append(p)
+            n //= p
+        return res
+
 def miller_rabin(n):
     # 確率的素数判定（ミラーラビン素数判定法）
     # 素数なら確実に True を返す、合成数なら確率的に False を返す
