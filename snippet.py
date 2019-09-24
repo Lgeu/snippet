@@ -393,11 +393,10 @@ def points2line(x1, y1, x2, y2):
     return la, lb, lc
 
 
-
 """
 # 高速ゼータ変換
 
-# 自身を含む集合を全て挙げる方
+# 自身を含む集合を全て挙げる方  # 上位集合の高速ゼータ変換
 N = 3
 f = [{i} for i in range(1<<N)]
 for i in range(N):
@@ -406,13 +405,15 @@ for i in range(N):
             f[j] |= f[j | (1<<i)]  # 総和は +=  # -=にすると逆変換になる
 print(f)
 
-# 部分集合をすべて挙げる方
+# 部分集合をすべて挙げる方  # 下位集合の高速ゼータ変換
 f = [{i} for i in range(1<<N)]
 for i in range(N):
     for j in range(1<<N):
         if j & 1<<i:
             f[j] |= f[j ^ (1<<i)]
 print(f)
+
+# 倍数集合の高速ゼータ変換: https://atcoder.jp/contests/agc038/submissions/7671865
 """
 
 
