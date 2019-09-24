@@ -55,6 +55,13 @@ def facinv_list(n, mod=10**9+7):
         L.append(L[i-1] * modinv(i, mod) % mod)
     return L
 
+def make_modinv_list(n, mod=10**9+7):
+    # 0 から n までの mod 逆元のリストを返す O(n)
+    modinv = [0, 1]
+    for i in range(2, n+1):
+        modinv.append(mod - mod//i * modinv[mod%i] % mod)
+    return modinv
+
 
 class Combination:
     def __init__(self, n_max, mod=10**9+7):
