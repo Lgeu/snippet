@@ -721,35 +721,54 @@ class Lca:  # 最近共通祖先
                 v = self.parent[k][v]
         return self.parent[0][u]
 
-def lagrange_interpolation(X, Y, mod):
-    # ラグランジュ補間 O(n^2)
-    # n 個の条件から n-1 次多項式を作る 返り値は次数の降順
-    # 検証: https://atcoder.jp/contests/abc137/submissions/6845025
-    # mod を取らない場合 scipy.interpolate.lagrange が使えそう
-    n = len(X)
-    g = [0]*(n+1)
-    g[0] = 1
-    for i, x in enumerate(X):
-        for j in range(i, -1, -1):
-            g[j+1] += g[j] * (-x) % mod
-    res = [0]*n
-    for x, y in zip(X, Y):
-        f = g[:]
-        denom = 0
-        v = 1
-        pow_x = [1]  # x の idx 乗
-        for _ in range(n-1):
-            v = v * x % mod
-            pow_x.append(v)
-        pow_x.reverse()  # n-1 乗 ~ 0 乗
-        for i, po in enumerate(pow_x):
-            f_i = f[i]
-            f[i+1] += f_i * x % mod  # f = g / (x - x_i) を組立除法で求める
-            denom = (denom + f_i * po) % mod
-        denom_inv = pow(denom, mod-2, mod)
-        for i, f_i in enumerate(f[:n]):
-            res[i] += (f_i * y * denom_inv)# % mod  # mod が大きいと 64bit に収まらなくなるのでひとつずつ mod 取った方がいいか？
-    return [v % mod for v in res]
+class NewtonInterpolation:
+    # ニュートン補間  O(n^2)  n は次元
+    # 具体的な係数は保持しない
+    def __init__(self, X=(), Y=(), mod=10**9+7):
+        self.mod = mod
+        self.X = []
+        self.C = []
+        for x, y in zip(X, Y):
+            self.add_constraint(x, y)
+
+    def add_constraint(self, x, y):  # O(n)
+        mod, X, C = self.mod, self.X, self.C
+        numer, denom = y, 1
+        for c, x_ in zip(C, X):
+            numer -= denom * c
+            denom = denom * (x - x_) % mod
+        X.append(x)
+        C.append(numer * pow(denom, mod-2, mod) % mod)
+
+    def calc(self, x):
+        mod, X, C = self.mod, self.X, self.C
+        y = 0
+        for c, x_ in zip(C[::-1], X[::-1]):
+            y = (y * (x - x_) + c) % mod
+        return y
+
+def fast_lagrange_interpolation(Y, x, mod=10**9+7):
+    # X = [0, 1, 2, ... , n] のラグランジュ補間  O(nlog(mod))  # n==len(Y)-1
+    if 0 <= x < len(Y):
+        return Y[x] % mod
+    factorial, f, numer = [1], 1, x
+    for x_ in range(1, len(Y)):
+        f = f * x_ % mod
+        factorial.append(f)
+        numer = numer * (x - x_) % mod
+    y = 0
+    for x_, (y_, denom1, denom2) in enumerate(zip(Y, factorial, factorial[::-1])):
+        y = (y_ * numer * pow((x-x_)*denom1*denom2, mod-2, mod) - y) % mod
+    return y
+
+def faulhaber(k, n, mod=10**9+7):  # べき乗和 0^k + 1^k + ... + (n-1)^k
+    # n に関する k+1 次式になるので最初の k+2 項を求めれば多項式補間できる  O(k log(mod))
+    s, Y = 0, [0]  # 第 0 項は 0
+    for x in range(k+1):
+        s += pow(x, k, mod)
+        Y.append(s)
+    return fast_lagrange_interpolation(Y, n, mod)
+
 
 class RollingHash:
     # 未検証
