@@ -121,16 +121,15 @@ class Combination:
         return sum(self.stirling_second(n, j) for j in range(1, k+1)) % self.mod
 
 
-# nまでの自然数が素数かどうかを表すリストを返す
-def makePrimeChecker(n):
-    isPrime = [True] * (n + 1)
-    isPrime[0] = False
-    isPrime[1] = False
-    for i in range(2, int(n ** 0.5) + 1):
-        if isPrime[i]:
-            for j in range(i * i, n + 1, i):
-                isPrime[j] = False
-    return isPrime
+def make_prime_checker(n):
+    # n までの自然数が素数かどうかを表すリストを返す  O(nloglogn)
+    is_prime = [False, True, False, False, False, True] * (n//6+1)
+    del is_prime[n+1:]
+    is_prime[1:4] = False, True, True
+    for i in range(5, int(n**0.5)+1):
+        if is_prime[i]:
+            is_prime[i*i::i] = [False] * (n//i-i+1)
+    return is_prime
 
 # 素因数分解
 def prime_decomposition(n):
