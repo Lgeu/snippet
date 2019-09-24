@@ -420,7 +420,6 @@ print(f)
 # https://atcoder.jp/contests/abc014/submissions/3935971
 class SegmentTree(object):
     __slots__ = ["elem_size", "tree", "default", "op"]
-
     def __init__(self, a: list, default: int, op):
         from math import ceil, log
         real_size = len(a)
@@ -429,7 +428,6 @@ class SegmentTree(object):
         tree[elem_size:elem_size + real_size] = a
         self.default = default
         self.op = op
-
         for i in range(elem_size - 1, 0, -1):
             tree[i] = op(tree[i << 1], tree[(i << 1) + 1])
 
@@ -444,7 +442,6 @@ class SegmentTree(object):
                 r -= 1
                 result = op(tree[r], result)
             l, r = l >> 1, r >> 1
-
         return result
 
     def set_value(self, i: int, value: int) -> None:
@@ -838,6 +835,7 @@ def garner(A, M, mod):
 def scc(E, n_vertex):
     # 強連結成分分解  # E は [[a1, b1], [a2, b2], ... ] の形
     # 返り値は 強連結成分の数 と 各頂点がどの強連結成分に属しているか
+    # numpy いらないのは https://tjkendev.github.io/procon-library/python/graph/scc.html
     import numpy as np
     from scipy.sparse import csr_matrix, csgraph
     A, B = np.array(E).T
@@ -1043,6 +1041,8 @@ class MaxClique:
 
 """
 A = csgraph.dijkstra(X, indices=0)
+
+zip(*[iter(Ans)]*3)  # 3 個ずつ
 
 https://github.com/Lgeu/snippet/
 import sys
