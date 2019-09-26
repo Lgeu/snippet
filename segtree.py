@@ -177,3 +177,30 @@ class SegTree(object):
         while i > 1:
             i >>= 1
             tree[i] = op(tree[i << 1], tree[(i << 1) + 1])
+
+
+class SparseTable:
+    def __init__(self, values, op=min, zero_element=float("inf")):  # O(nlogn * (op の計算量))
+        self.n = n = len(values)
+        self.table = table = [values]
+        self.op = op
+        self.zero_element = zero_element
+        for d in range(n.bit_length()-1):
+            table.append([op(v1, v2) for v1, v2 in zip(table[-1], table[-1][1<<d:])])
+ 
+    def get_value(self, l, r):  # 半開区間  # O(op の計算量)
+        bl_m1 = (r-l).bit_length() - 1
+        t = self.table[bl_m1]
+        return self.op(t[l], t[r-(1<<bl_m1)])
+ 
+    def arc023d(self, l, g):  # op(values[l:r]) が g 以上である最大の r を求める  O(logn * (op の計算量))
+        bl_m1, op = (self.n-l).bit_length()-1, self.op
+        g_prov, r, step = self.zero_element, l, 1<<bl_m1
+        for t in self.table[bl_m1::-1]:
+            if r < len(t):
+                g_next = op(g_prov, t[r])
+                if g_next >= g:
+                    g_prov = g_next
+                    r += step
+            step >>= 1
+        return r
