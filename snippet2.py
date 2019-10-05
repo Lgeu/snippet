@@ -322,6 +322,18 @@ def lagrange_interpolation(X, Y, mod):
     return [v % mod for v in res]
 
 
+# karatsuba 法
+def list2bigint(lst, bit=64):  # 非負整数のみ
+    fmt = "0{}x".format(bit//4)
+    return int("".join(format(v, fmt) for v in lst), 16)
+
+def bigint2list(n, bit=64, length=None):  # length を指定しない場合左側の 0 は省略されるので注意
+    n_hex = bit//4
+    s = format(n, "0{}x".format(n_hex*length) if length else "x")
+    s = -len(s) % n_hex * "0" + s
+    return [int(s[i:i+n_hex], 16) for i in range(0, len(s), n_hex)]
+
+
 # リスト埋め込み用  # AtCoder なら 50000 要素くらいは埋め込める  # 圧縮率が高ければそれ以上も埋め込める
 def encode_list(lst):
     import array, gzip, base64
