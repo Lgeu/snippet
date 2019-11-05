@@ -832,6 +832,25 @@ def garner(A, M, mod):
             coffs[j] = coffs[j] * m % mm
     return constants[-1]
 
+def convolve_mod(A, B, mod=10**9+7):
+    # 任意 mod 畳み込み
+    #mods = [1000003, 1000033, 1000037, 1000039]  # 要素数が 10**3 程度の場合（誤差 6*2+3=15<16  復元 6*4=24>21=9*2+3）
+    mods = [100003, 100019, 100043, 100049, 100057]  # 要素数が10**5 程度の場合（誤差 5*2+5=15<16  復元 5*5=25>23=9*2+5）
+    mods_np = np.array(mods, dtype=np.int32)
+    fft, ifft = np.fft.rfft, np.fft.irfft
+    a, b = len(A), len(B)
+    if a == b == 1:
+        return np.array([A[0] * B[0]]) % mod
+    n = a + b - 1  # 畳み込みの結果の長さ
+    k = 1 << (n - 1).bit_length()  # n 以上の最小の 2 冪
+    AB = np.zeros((2, len(mods), k), dtype=np.int64)  # ここの dtype は fft 後の dtype に関係しない
+    AB[0, :, :a] = A
+    AB[1, :, :b] = B
+    AB[:, :, :] %= mods_np[:, None]
+    C = ifft(fft(AB[0]) * fft(AB[1]))[:, :n]
+    C = ((C + 0.5) % mods_np[:, None]).astype(np.int64)
+    return garner(C, mods, mod)
+
 def scc(E, n_vertex):
     # 強連結成分分解  # E は [[a1, b1], [a2, b2], ... ] の形
     # 返り値は 強連結成分の数 と 各頂点がどの強連結成分に属しているか
