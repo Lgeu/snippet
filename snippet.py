@@ -342,6 +342,22 @@ class Dijkstra:
         # 経路をreverseして出力
         return list(reversed(path))
 
+def dijkstra(E, start):
+    from heapq import heappush, heappop
+    N = len(E)
+    inf = float("inf")
+    dist = [inf] * N
+    dist[start] = 0
+    q = [(0, start)]
+    while q:
+        dist_v, v = heappop(q)
+        if dist[v] != dist_v:
+            continue
+        for u, dist_vu in E[v]:
+            dist_u = dist_v + dist_vu
+            if dist_u < dist[u]:
+                dist[u] = dist_u
+                heappush(q, (dist_u, u))
 
 # unionfind
 class Uf:
@@ -1058,6 +1074,9 @@ class MaxClique:
                 self._dfs(elem_num + 1, candi & E_sorted[next])
 
 """
+# 重み付き UnionFind https://atcoder.jp/contests/code-festival-2016-quala/submissions/8336387
+# Trie https://atcoder.jp/contests/code-festival-2016-qualb/submissions/8335110
+
 A = csgraph.dijkstra(X, indices=0)
 
 zip(*[iter(Ans)]*3)  # 3 個ずつ
@@ -1065,11 +1084,13 @@ zip(*[iter(Ans)]*3)  # 3 個ずつ
 https://github.com/Lgeu/snippet/
 import sys
 input = sys.stdin.readline
+zip(*[iter(map(int, sys.stdin.read().split()))]*4):
+C = np.frombuffer(buf.read(), dtype="S1").reshape(H, W+1)[:, :-1].T
 def input():
     return sys.stdin.readline()[:-1]
 
 from functools import lru_cache
-@lru_cache(maxsize=None)  # メモ化再帰したい関数の前につける
+@lru_cache(maxsize=None)
 
 import sys
 sys.setrecursionlimit(500000)
