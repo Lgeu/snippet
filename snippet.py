@@ -433,19 +433,25 @@ print(f)
 """
 
 
-# https://atcoder.jp/contests/abc014/submissions/3935971
+# 参考: https://atcoder.jp/contests/abc014/submissions/3935971
 class SegmentTree(object):
-    __slots__ = ["elem_size", "tree", "default", "op"]
-    def __init__(self, a: list, default: int, op):
-        from math import ceil, log
-        real_size = len(a)
-        self.elem_size = elem_size = 1 << ceil(log(real_size, 2))
-        self.tree = tree = [default] * (elem_size * 2)
-        tree[elem_size:elem_size + real_size] = a
+    # 検証: https://atcoder.jp/contests/nikkei2019-2-qual/submissions/8434117
+    __slots__ = ["elem_size", "tree", "default", "op", "real_size"]
+
+    def __init__(self, a, default, op):
         self.default = default
         self.op = op
-        for i in range(elem_size - 1, 0, -1):
-            tree[i] = op(tree[i << 1], tree[(i << 1) + 1])
+        if hasattr(a, "__iter__"):
+            self.real_size = len(a)
+            self.elem_size = elem_size = 1 << (self.real_size-1).bit_length()
+            self.tree = tree = [default] * (elem_size * 2)
+            tree[elem_size:elem_size + self.real_size] = a
+            for i in range(elem_size - 1, 0, -1):
+                tree[i] = op(tree[i << 1], tree[(i << 1) + 1])
+        elif isinstance(a, int):
+            self.real_size = a
+            self.elem_size = elem_size = 1 << (self.real_size-1).bit_length()
+            self.tree = [default] * (elem_size * 2)
 
     def get_value(self, x: int, y: int) -> int:  # 半開区間
         l, r = x + self.elem_size, y + self.elem_size
@@ -462,14 +468,18 @@ class SegmentTree(object):
 
     def set_value(self, i: int, value: int) -> None:
         k = self.elem_size + i
-        self.tree[k] = value
-        self.update(k)
-
-    def update(self, i: int) -> None:
         op, tree = self.op, self.tree
-        while i > 1:
-            i >>= 1
-            tree[i] = op(tree[i << 1], tree[(i << 1) + 1])
+        tree[k] = value
+        while k > 1:
+            k >>= 1
+            tree[k] = op(tree[k << 1], tree[(k << 1) + 1])
+
+    def get_one_value(self, i):
+        return self.tree[i+self.elem_size]
+
+    def debug(self):
+        print(self.tree[self.elem_size:self.elem_size+self.real_size])
+
 """
 C = [int(input()) for _ in range(N)]
 
