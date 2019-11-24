@@ -44,11 +44,13 @@ seg = SegmentTree(list(enumerate(A)),
 
 class SegTreeIndex(object):
     # 区間の最小 or 最大値とその index を取得
-    # 検証: https://yukicoder.me/submissions/376308
+    # 検証1: https://yukicoder.me/submissions/376308
+    # 検証2: https://atcoder.jp/contests/abc146/submissions/8634746
     __slots__ = ["elem_size", "tree", "default", "op", "index", "op2"]
-    def __init__(self, a: list, default=float("inf"), op=min, op2=lambda a,b:a>b):
+    def __init__(self, a: list, default=float("inf"), op=lambda a,b: b if a>b else a, op2=lambda a,b:a>b):
         # 同じ場合最左のインデックスを返す
-        # 最大値・最左 -> -float("inf"), max, lambda a,b:a<=b
+        # 最小値・最左: default=float("inf"), op=lambda a,b: b if a>b else a, op2=lambda a,b:a>b
+        # 最大値・最左: -float("inf"), max, lambda a,b:a<=b
         from math import ceil, log
         real_size = len(a)
         self.elem_size = elem_size = 1 << ceil(log(real_size, 2))
@@ -66,22 +68,25 @@ class SegTreeIndex(object):
 
     def get_value(self, x: int, y: int) -> tuple:  # 半開区間
         l, r = x + self.elem_size, y + self.elem_size
-        tree, result, op, op2, index = self.tree, self.default, self.op, self.op2, self.index
-        idx = -1
+        tree, op, op2, index = self.tree, self.op, self.op2, self.index
+        result_l = result_r = self.default
+        idx_l = idx_r = -1
         while l < r:
             if l & 1:
-                v1, v2 = result, tree[l]
-                result = op(v1, v2)
+                v1, v2 = result_l, tree[l]
+                result_l = op(v1, v2)
                 if op2(v1, v2)==1:
-                    idx = index[l]
+                    idx_l = index[l]
                 l += 1
             if r & 1:
                 r -= 1
-                v1, v2 = tree[r], result
-                result = op(v1, v2)
+                v1, v2 = tree[r], result_r
+                result_r = op(v1, v2)
                 if op2(v1, v2)==0:
-                    idx = index[r]
+                    idx_r = index[r]
             l, r = l >> 1, r >> 1
+        result = op(result_l, result_r)
+        idx = idx_r if op2(result_l, result_r) else idx_l
         return result, idx
 
     def set_value(self, i: int, value: int) -> None:
