@@ -5,6 +5,7 @@ class SquareSkipList:
     # 検証1 (add, pop) データ構造: https://atcoder.jp/contests/arc033/submissions/7488620
     # 検証2 (init, add, remove, search_higher_equal) Exclusive OR Queries: https://atcoder.jp/contests/cpsco2019-s1/submissions/7488225
     # 検証3 (add, search_higher, search_lower) Second Sum: https://atcoder.jp/contests/abc140/submissions/7488469
+    # 検証4 (add, __getitem__) [CF] Optimal Subsequences (Hard Version): https://codeforces.com/contest/1261/submission/65643461
     def __init__(self, values=None, sorted_=False, square=1000, seed=42):
         # values: 初期値のリスト
         # sorted_: 初期値がソート済みであるか
@@ -107,6 +108,19 @@ class SquareSkipList:
             return self.layer1.pop(i)
         else:
             return layer0[i].pop(idx-s)
+        
+    def __getitem__(self, item):
+        # 小さい方から idx 番目の要素を返す  O(sqrt(N))
+        layer0 = self.layer0
+        s = -1
+        for i, l0 in enumerate(layer0):
+            s += len(l0) + 1
+            if s >= item:
+                break
+        if s == item:
+            return self.layer1[i]
+        else:
+            return layer0[i][item-s]
 
     def print(self):
         print(self.layer1)
