@@ -359,6 +359,34 @@ def dijkstra(E, start):
                 dist[u] = dist_u
                 heappush(q, (dist_u, u))
 
+def shortest_path_faster_algorithm(E, start):
+    # ベルマンフォードの更新があるところだけ更新する感じのやつ
+    # O(VE) だが実用上高速
+    # E は隣接リスト
+    # 検証: http://judge.u-aizu.ac.jp/onlinejudge/review.jsp?rid=4005805#1
+    inf = float("inf")  # 10**18 は良くない
+    N = len(E)
+    q = [start]
+    distance = [inf] * N;  distance[start] = 0
+    in_q = [0] * N;        in_q[start] = True
+    times = [0] * N;       times[start] = 1
+    while q:
+        v = q.pop()
+        in_q[v] = False
+        dist_v = distance[v]
+        for u, cost in E[v]:
+            new_dist_u = dist_v + cost
+            if distance[u] > new_dist_u:
+                times[u] += 1
+                if times[u] >= N:  # 負閉路検出
+                    distance[u] = -inf
+                else:
+                    distance[u] = new_dist_u
+                if not in_q[u]:
+                    in_q[u] = True
+                    q.append(u)
+    return distance
+
 # unionfind
 class Uf:
     def __init__(self, N):
