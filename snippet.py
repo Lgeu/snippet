@@ -364,6 +364,7 @@ def shortest_path_faster_algorithm(E, start):
     # O(VE) だが実用上高速
     # E は隣接リスト
     # 検証: http://judge.u-aizu.ac.jp/onlinejudge/review.jsp?rid=4005805#1
+    # deque 版 (コーナーケースに強い？): http://judge.u-aizu.ac.jp/onlinejudge/review.jsp?rid=4005813
     inf = float("inf")  # 10**18 は良くない
     N = len(E)
     q = [start]
