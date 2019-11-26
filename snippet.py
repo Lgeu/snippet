@@ -523,15 +523,16 @@ for i in range(N):
 print(seg.get_value(0, N+1)+N)
 """
 
-# 最長回文
-def man(S):
-    i = 0
-    j = 0
-    n = len(S)
+def manacher(S):
+    # 最長回文 O(n)
+    # R[i] := i 文字目を中心とする最長の回文の半径（自身を含む）
+    # 偶数長の回文を検出するには "a$b$a$a$b" のようにダミーを挟む
+    # 検証: https://atcoder.jp/contests/wupc2019/submissions/8665857
+    i, j, n = 0, 0, len(S)
     R = [0]*n
     while i < n:
         while i-j >= 0 and i+j < n and S[i-j] == S[i+j]:
-            j+=1
+            j += 1
         R[i] = j
         k = 1
         while i-k >= 0 and i+k < n and k+R[i-k] < j:
@@ -1115,6 +1116,7 @@ class MaxClique:
 """
 # 重み付き UnionFind https://atcoder.jp/contests/code-festival-2016-quala/submissions/8336387
 # Trie https://atcoder.jp/contests/code-festival-2016-qualb/submissions/8335110
+# 全方位木 dp https://atcoder.jp/contests/yahoo-procon2019-final-open/submissions/8664902
 
 A = csgraph.dijkstra(X, indices=0)
 
