@@ -526,21 +526,23 @@ print(seg.get_value(0, N+1)+N)
 def manacher(S):
     # 最長回文 O(n)
     # R[i] := i 文字目を中心とする最長の回文の半径（自身を含む）
-    # 偶数長の回文を検出するには "a$b$a$a$b" のようにダミーを挟む
+    # 偶数長の回文を検出するには "$a$b$a$a$b$" のようにダミーを挟む
     # 検証: https://atcoder.jp/contests/wupc2019/submissions/8665857
-    i, j, n = 0, 0, len(S)
+    # 左右で違う条件: https://atcoder.jp/contests/code-thanks-festival-2014-a-open/submissions/12911822
+    c, r, n = 0, 0, len(S)  # center, radius, length
     R = [0]*n
-    while i < n:
-        while i-j >= 0 and i+j < n and S[i-j] == S[i+j]:
-            j += 1
-        R[i] = j
-        k = 1
-        while i-k >= 0 and i+k < n and k+R[i-k] < j:
-            R[i+k] = R[i-k]
-            k += 1
-        i += k
-        j -= k
+    while c < n:
+        while c-r >= 0 and c+r < n and S[c-r] == S[c+r]:
+            r += 1
+        R[c] = r
+        d = 1  # distance from center
+        while c-d >= 0 and c+d < n and d+R[c-d] < r:
+            R[c+d] = R[c-d]
+            d += 1
+        c += d
+        r -= d
     return R
+
 
 # 最大流問題
 from collections import deque
