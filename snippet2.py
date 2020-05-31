@@ -334,6 +334,26 @@ def bigint2list(n, bit=64, length=None):  # length を指定しない場合左�
     return [int(s[i:i+n_hex], 16) for i in range(0, len(s), n_hex)]
 
 
+def gauss_jordan(A):
+    # F2 上の Gauss Jordan の掃き出し法
+    # 基底を取り出す
+    # 引数を破壊的に変更する
+    idx = 0
+    for i in range(59, -1, -1):
+        for j, a in enumerate(A[idx:], idx):
+            if a>>i & 1:
+                break
+        else:
+            continue
+        A[idx], A[j] = A[j], A[idx]
+        for j in range(len(A)):
+            if j != idx and A[j]>>i & 1:
+                A[j] ^= a
+        idx += 1
+    assert not any(A[idx:])
+    del A[idx:]
+
+
 # リスト埋め込み用  # AtCoder なら 50000 要素くらいは埋め込める  # 圧縮率が高ければそれ以上も埋め込める
 def encode_list(lst):
     import array, gzip, base64
