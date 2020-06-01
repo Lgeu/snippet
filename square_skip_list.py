@@ -6,6 +6,7 @@ class SquareSkipList:
     # 検証2 (init, add, remove, search_higher_equal) Exclusive OR Queries: https://atcoder.jp/contests/cpsco2019-s1/submissions/7488225
     # 検証3 (add, search_higher, search_lower) Second Sum: https://atcoder.jp/contests/abc140/submissions/7488469
     # 検証4 (add, __getitem__) [CF] Optimal Subsequences (Hard Version): https://codeforces.com/contest/1261/submission/65643461
+    # 検証5 (init, add, pop) Dinner Planning: https://atcoder.jp/contests/code-festival-2018-final-open/submissions/13916065
     def __init__(self, values=None, sorted_=False, square=1000, seed=42):
         # values: 初期値のリスト
         # sorted_: 初期値がソート済みであるか
