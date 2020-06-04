@@ -354,6 +354,93 @@ def gauss_jordan(A):
     del A[idx:]
 
 
+class HLD:
+    # HL 分解
+    # 検証1 (distance) 閉路: https://atcoder.jp/contests/abc014/submissions/13991240
+    def __init__(self, E, root=1):
+        # E は双方向に辺を張った木で、破壊的に有向グラフに変更される
+        # O(N)
+        self.E = E
+        self.root = root
+        self.N = N = len(E)  # 頂点数
+        self.Parent = [-1] * N  # 頂点番号 v -> 親ノード
+        self.Size = [-1] * N  # 頂点番号 v -> 部分木のサイズ
+        self.dfs1()
+
+        self.Mapping = [-1] * N  # 頂点番号 v -> 内部インデックス
+        self.Head = list(range(N))  # 頂点番号 v -> v を含む heavy path の左端の頂点番号
+        self.Depth = [0] * N  # 頂点番号 v -> 深さ（root から v までの距離）
+        self.dfs2()
+
+    def dfs1(self):
+        E = self.E
+        Parent, Size = self.Parent, self.Size
+        Path = [self.root]
+        Idx_edge = [0]
+        while Path:
+            v = Path[-1]
+            idx_edge = Idx_edge[-1]
+            Ev = E[v]
+            if idx_edge != len(Ev):
+                # 行きがけ・通りがけ 辺の数だけ実行される
+                u = Ev[idx_edge]
+                Idx_edge[-1] += 1
+                E[u].remove(v)  # 有向グラフならここをコメントアウトする
+                Parent[u] = v
+                Path.append(u)
+                Idx_edge.append(0)
+            else:
+                # 帰りがけ 頂点の数だけ実行される
+                if len(Ev) >= 2:
+                    ma = -1
+                    argmax = None
+                    for i, u in enumerate(Ev):
+                        if Size[u] > ma:
+                            ma = Size[u]
+                            argmax = i
+                    u0, um = Ev[0], Ev[argmax]
+                    Size[u0], Size[um] = Size[um], Size[u0]
+                    Ev[0], Ev[argmax] = Ev[argmax], Ev[0]
+                Size[v] = sum(Size[u] for u in Ev) + 1
+                Path.pop()
+                Idx_edge.pop()
+    
+    def dfs2(self):
+        E = self.E
+        Mapping = self.Mapping
+        Head = self.Head
+        Depth = self.Depth
+        k = 0
+        St = [self.root]
+        while St:
+            v = St.pop()
+            Mapping[v] = k
+            k += 1
+            Ev = E[v]
+            if Ev:
+                Head[Ev[0]] = Head[v]
+                St += Ev[::-1]
+                for u in Ev:
+                    Depth[u] = Depth[v] + 1  # distance を使わないのならここをコメントアウトする
+    
+    def lca(self, v, u):
+        # O(logN)
+        Parent = self.Parent
+        Mapping = self.Mapping
+        Head = self.Head
+        while True:
+            if Mapping[v] > Mapping[u]:
+                v, u = u, v  # v の方を根に近くする
+            if Head[v] == Head[u]:
+                return v
+            u = Parent[Head[u]]
+    
+    def distance(self, v, u):
+        # O(logN)
+        Depth = self.Depth
+        return Depth[v] + Depth[u] - 2 * Depth[self.lca(v, u)]
+
+
 # リスト埋め込み用  # AtCoder なら 50000 要素くらいは埋め込める  # 圧縮率が高ければそれ以上も埋め込める
 def encode_list(lst):
     import array, gzip, base64
