@@ -441,6 +441,29 @@ class HLD:
         return Depth[v] + Depth[u] - 2 * Depth[self.lca(v, u)]
 
 
+from operator import itemgetter
+def dhondt(Votes, n_seats):
+    # ドント方式  候補者数 N に対して O(NlogN)
+    n_candidates = len(Votes)
+    sum_votes = sum(Votes)
+    S0 = []  # 端数切り捨てによってすぐ確定できる席数
+    C = []
+    for i, v in enumerate(Votes):
+        s0 = n_seats*v//sum_votes
+        S0.append(s0)
+        for s in range(s0+1, s0+10000):
+            if s*sum_votes >= v*(n_seats+n_candidates):
+                break
+            C.append((s/v, i))
+        else:
+            assert False
+    C.sort(key=itemgetter(0))
+    S = S0[:]
+    for _, i in C[:n_seats-sum(S0)]:
+        S[i] += 1
+    return S0, S
+
+
 # リスト埋め込み用  # AtCoder なら 50000 要素くらいは埋め込める  # 圧縮率が高ければそれ以上も埋め込める
 def encode_list(lst):
     import array, gzip, base64
