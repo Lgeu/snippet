@@ -92,6 +92,7 @@
 - 多倍長整数を使った Karatsuba 法
 - F2 上の Gauss Jordan の掃き出し法
 - LCA (HL分解)
+- ドント方式
 - リスト埋め込み用エンコーダ・デコーダ
 
 ##### square_skip_list.py
