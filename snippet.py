@@ -543,6 +543,28 @@ def manacher(S):
         r -= d
     return R
 
+def z_algo(S):
+    # Z-algoirhm  O(n)
+    # Z[i] := S と S[i:] で prefix が何文字一致しているか
+    # 検証: https://atcoder.jp/contests/arc055/submissions/14179788
+    i, j, n = 1, 0, len(S)
+    Z = [0] * n
+    Z[0] = n
+    while i < n:
+        while i+j < n and S[j] == S[i+j]:
+            j += 1
+        if j == 0:
+            i += 1
+            continue
+        Z[i] = j
+        d = 1
+        while i+d < n and d+Z[d] < j:
+            Z[i+d] = Z[d]
+            d += 1
+        i += d
+        j -= d
+    return Z
+
 
 # 最大流問題
 from collections import deque
