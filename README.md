@@ -51,6 +51,7 @@
 - (倍数集合の高速ゼータ変換)
 - Segment Tree
 - Manacher (最長回文)
+- Z-algorithm
 - Dinic 法 (最大流問題)
 - Monotone Chain (凸包)
 - 2 線分の交差判定
