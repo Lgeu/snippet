@@ -1072,9 +1072,10 @@ def kitamasa(C, n, mod=10**9+7):
 
 class MaxClique:
     # 最大クリーク
-    # 参考: https://atcoder.jp/contests/code-thanks-festival-2017-open/submissions/2691674
-    # 検証: https://atcoder.jp/contests/code-thanks-festival-2017-open/submissions/7620028
     # Bron–Kerbosch algorithm (O(1.4422^|V|)) の枝刈りをしたもの
+    # 参考: https://atcoder.jp/contests/code-thanks-festival-2017-open/submissions/2691674
+    # 検証1: https://atcoder.jp/contests/code-thanks-festival-2017-open/submissions/7620028
+    # 検証2: https://judge.yosupo.jp/submission/12486
     def __init__(self, n):
         self.n = n
         self.E = [0] * n
