@@ -357,6 +357,7 @@ def gauss_jordan(A):
 class HLD:
     # HL 分解
     # 検証1 (distance) 閉路: https://atcoder.jp/contests/abc014/submissions/13991240
+    # 検証2 (lca) [yosupo] Lowest Common Ancestor: https://judge.yosupo.jp/submission/12490
     def __init__(self, E, root=1):
         # E は双方向に辺を張った木で、破壊的に有向グラフに変更される
         # O(N)
