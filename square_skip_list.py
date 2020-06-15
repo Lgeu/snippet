@@ -124,7 +124,45 @@ class SquareSkipList:
         else:
             return layer0[i][item-s]
 
+    def min(self):  # 最小値を返す  空なら inf を返す  O(1)
+        return self.layer0[0][0] if self.layer0[0] else self.layer1[0]
+
+    def max(self):  # 最大値を返す  空ならエラー  O(1)
+        return self.layer0[-1][-1] if self.layer0[-1] else self.layer1[-2]
+
+    def merge(self, r):  # 結合  O(sqrt(n))
+        self.layer0[-1] += r.layer0[0]
+        self.layer0 += r.layer0[1:]
+        del self.layer1[-1]
+        self.layer1 += r.layer1
+
+    def split(self, k):  # k 以上を切り離す  O(sqrt(n))
+        idx1 = bisect_left(self.layer1, k)
+        layer0_idx1 = self.layer0[idx1]
+        idx0 = bisect_left(layer0_idx1, k)
+        r = SquareSkipList(square=self.square, seed=self.rand_y)
+        r.layer1 = self.layer1[idx1:]
+        r.layer0 = [layer0_idx1[idx0:]] + self.layer0[idx1+1:]
+        del self.layer1[idx1:-1], layer0_idx1[idx0:], self.layer0[idx1+1:]
+        return r
+
     def print(self):
         print(self.layer1)
         print(self.layer0)
 
+    def __iter__(self):
+        layer1 = self.layer1
+        layer0 = self.layer0
+        idx1 = idx0 = 0
+        layer0_idx1 = layer0[idx1]
+        while True:
+            if len(layer0_idx1) == idx0:
+                if len(layer1)-1 == idx1:
+                    return
+                yield layer1[idx1]
+                idx1 += 1
+                layer0_idx1 = layer0[idx1]
+                idx0 = 0
+            else:
+                yield layer0_idx1[idx0]
+                idx0 += 1
