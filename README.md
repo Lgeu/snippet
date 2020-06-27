@@ -7,7 +7,7 @@
 
 ##### avl_tree.py
 
-- AVL 木
+- AVL 木（非推奨、square_skip_list.py を使うべき）
 
 ##### binary_indexed_tree.py
 
@@ -99,3 +99,7 @@
 ##### square_skip_list.py
 
 - C++ の multiset に相当するデータ構造
+
+##### wrap_cpp_multiset.py
+
+- C++ の multiset のラッパー
