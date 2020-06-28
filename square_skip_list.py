@@ -8,11 +8,13 @@ class SquareSkipList:
     # 検証4 (add, __getitem__) [CF] Optimal Subsequences (Hard Version): https://codeforces.com/contest/1261/submission/65643461
     # 検証5 (init, add, pop) Dinner Planning: https://atcoder.jp/contests/code-festival-2018-final-open/submissions/13916065
     # 検証6 (要素がタプル, init, add, remove, max, pop_max) Lake: https://atcoder.jp/contests/snuke21/submissions/14718529
+    # 検証7 (init, add, remove, pop, max, pop_max) ドーナツの箱詰め: https://atcoder.jp/contests/donuts-2015/submissions/14829916
     def __init__(self, values=None, sorted_=False, square=1000, seed=42, inf=float("inf")):
         # values: 初期値のリスト
         # sorted_: 初期値がソート済みであるか
         # square: 最大データ数の平方根
         # seed: 乱数のシード
+        # inf: 番兵（要素がタプルのときは (float("inf"), float("inf")) にする）
         self.square = square
         if values is None:
             self.rand_y = seed
@@ -53,7 +55,7 @@ class SquareSkipList:
             layer1.insert(idx1, x)
             layer0_idx1 = layer0[idx1]
             idx0 = bisect_right(layer0_idx1, x)
-            layer0.insert(idx1+1, layer0_idx1[idx0:])  # layer0 は dict で管理した方が良いかもしれない  # dict 微妙だった
+            layer0.insert(idx1 + 1, layer0_idx1[idx0:])  # layer0 は dict で管理した方が良いかもしれない  # dict 微妙だった
             del layer0_idx1[idx0:]
         else:
             idx1 = bisect_right(self.layer1, x)
@@ -66,7 +68,7 @@ class SquareSkipList:
         idx0 = bisect_left(layer0_idx1, x)
         if idx0 == len(layer0_idx1):
             del self.layer1[idx1]
-            self.layer0[idx1] += self.layer0.pop(idx1+1)
+            self.layer0[idx1] += self.layer0.pop(idx1 + 1)
         else:
             del layer0_idx1[idx0]
  
@@ -91,8 +93,8 @@ class SquareSkipList:
         layer0_idx1 = self.layer0[idx1]
         idx0 = bisect_left(layer0_idx1, x)
         if idx0 == 0:  # layer0_idx1 が空の場合とすべて x 以上の場合
-            return self.layer1[idx1-1]
-        return layer0_idx1[idx0-1]
+            return self.layer1[idx1 - 1]
+        return layer0_idx1[idx0 - 1]
  
     def pop(self, idx):
         # 小さい方から idx 番目の要素を削除してその要素を返す（0-indexed）
@@ -104,22 +106,21 @@ class SquareSkipList:
             s += len(l0) + 1
             if s >= idx:
                 break
-        if s==idx:
-            layer0[i] += layer0.pop(i+1)
+        if s == idx:
+            layer0[i] += layer0.pop(i + 1)
             return self.layer1.pop(i)
         else:
-            return layer0[i].pop(idx-s)
-    
-    def pop_max(self, idx):
+            return layer0[i].pop(idx - s)
+ 
+    def pop_max(self):
         # 最大値を削除してその要素を返す（0-indexed） O(1)
         # 空ならエラー
-        self.layer0[-1][-1] if self.layer0[-1] else self.layer1[-2]
         if self.layer0[-1]:
             return self.layer0[-1].pop()
         else:
             del self.layer0[-1]
             return self.layer1.pop(-2)
-        
+ 
     def __getitem__(self, item):
         # 小さい方から idx 番目の要素を返す  O(sqrt(N))
         layer0 = self.layer0
@@ -131,7 +132,7 @@ class SquareSkipList:
         if s == item:
             return self.layer1[i]
         else:
-            return layer0[i][item-s]
+            return layer0[i][item - s]
  
     def min(self):  # 最小値を返す  空なら inf を返す  O(1)
         return self.layer0[0][0] if self.layer0[0] else self.layer1[0]
@@ -151,8 +152,8 @@ class SquareSkipList:
         idx0 = bisect_left(layer0_idx1, k)
         r = SquareSkipList(square=self.square, seed=self.rand_y)
         r.layer1 = self.layer1[idx1:]
-        r.layer0 = [layer0_idx1[idx0:]] + self.layer0[idx1+1:]
-        del self.layer1[idx1:-1], layer0_idx1[idx0:], self.layer0[idx1+1:]
+        r.layer0 = [layer0_idx1[idx0:]] + self.layer0[idx1 + 1:]
+        del self.layer1[idx1:-1], layer0_idx1[idx0:], self.layer0[idx1 + 1:]
         return r
  
     def print(self):
@@ -166,7 +167,7 @@ class SquareSkipList:
         layer0_idx1 = layer0[idx1]
         while True:
             if len(layer0_idx1) == idx0:
-                if len(layer1)-1 == idx1:
+                if len(layer1) - 1 == idx1:
                     return
                 yield layer1[idx1]
                 idx1 += 1
@@ -175,3 +176,4 @@ class SquareSkipList:
             else:
                 yield layer0_idx1[idx0]
                 idx0 += 1
+ 
