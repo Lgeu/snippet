@@ -625,6 +625,7 @@ class Dinic:
 
 
 # 凸包 Monotone Chain O(nlogn)
+# original author: matsu7874
 # 参考: https://matsu7874.hatenablog.com/entry/2018/12/17/025713
 # 複素数版は https://atcoder.jp/contests/abc139/submissions/7301049
 def get_convex_hull(points):
@@ -740,6 +741,7 @@ def intersection(circle, polygon):
     return area
 
 def lis(A: list):  # 最長増加部分列
+    # original author: ikatakos
     # https://ikatakos.com/pot/programming_algorithm/dynamic_programming/longest_common_subsequence
     from bisect import bisect_left
     L = [A[0]]
