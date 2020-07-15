@@ -9,6 +9,7 @@ class SquareSkipList:
     # 検証5 (init, add, pop) Dinner Planning: https://atcoder.jp/contests/code-festival-2018-final-open/submissions/13916065
     # 検証6 (要素がタプル, init, add, remove, max, pop_max) Lake: https://atcoder.jp/contests/snuke21/submissions/14718529
     # 検証7 (init, add, remove, pop, max, pop_max) ドーナツの箱詰め: https://atcoder.jp/contests/donuts-2015/submissions/14829916
+    # 検証8 (init, add, remove, min, max) Smart Infants: https://atcoder.jp/contests/abc170/submissions/15264112
     def __init__(self, values=None, sorted_=False, square=1000, seed=42, inf=float("inf")):
         # values: 初期値のリスト
         # sorted_: 初期値がソート済みであるか
