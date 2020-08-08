@@ -445,6 +445,8 @@ class HLD:
 from operator import itemgetter
 def dhondt(Votes, n_seats):
     # ドント方式  候補者数 N に対して O(NlogN)
+    # 検証1: Logs https://atcoder.jp/contests/abc174/submissions/15637677
+    # 検証2: Lake https://atcoder.jp/contests/snuke21/submissions/14785590
     n_candidates = len(Votes)
     sum_votes = sum(Votes)
     S0 = []  # 端数切り捨てによってすぐ確定できる席数
@@ -463,6 +465,16 @@ def dhondt(Votes, n_seats):
     for _, i in C[:n_seats-sum(S0)]:
         S[i] += 1
     return S0, S
+
+
+def sqrt_case_manager(N):
+    # x ∈ [1, N] に対して、N//x の取りうる値と、その値を取るときの x の範囲（半開区間）を列挙
+    # O(sqrt(N))
+    l = 1
+    while l <= N:
+        r = N//(N//l) + 1
+        yield N//l, l, r
+        l = r
 
 
 # リスト埋め込み用  # AtCoder なら 50000 要素くらいは埋め込める  # 圧縮率が高ければそれ以上も埋め込める
