@@ -138,8 +138,8 @@ def make_prime_checker(n):
             is_prime[i*i::i] = [False] * (n//i-i+1)
     return is_prime
 
-# 素因数分解
-def prime_decomposition(n):
+def prime_factorization(n):
+    # 素因数分解
     i = 2
     table = []
     while i * i <= n:
@@ -150,6 +150,17 @@ def prime_decomposition(n):
     if n > 1:
         table.append(n)
     return table
+
+def fast_prime_factorization(n):
+    # 素因数分解（ロー法）  O(n^(1/4) polylog(n))
+    from subprocess import Popen, PIPE
+    return list(map(int, Popen(["factor", str(n)], stdout=PIPE).communicate()[0].split()[1:]))
+
+def fast_prime_factorization_many(lst):
+    # 素因数分解（ロー法、複数）
+    from subprocess import Popen, PIPE
+    res = Popen(["factor"] + list(map(str, lst)), stdout=PIPE).communicate()[0].split(b"\n")[:-1]
+    return [list(map(int, r.split()[1:])) for r in res]
 
 class Osa_k:
     def __init__(self, n_max):
