@@ -58,3 +58,13 @@ def inversion_number(arr):  # [inversion_number, "i8(f8[:])"],
         bit_add(bit, val, 1)
     return res
 
+
+def numba_pow(base, exp, mod):  # [numba_pow, "i8(i8,i8,i8)"],
+    exp %= mod - 1
+    res = 1
+    while exp:
+        if exp % 2:
+            res = res * base % mod
+        base = base * base % mod
+        exp //= 2
+    return res
