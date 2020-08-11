@@ -68,3 +68,26 @@ def numba_pow(base, exp, mod):  # [numba_pow, "i8(i8,i8,i8)"],
         base = base * base % mod
         exp //= 2
     return res
+
+
+def z_algo(S):  # [z_algo, "i8[:](i8[:])"],
+    # Z-algoirhm  O(n)
+    # Z[i] := S と S[i:] で prefix が何文字一致しているか
+    # 検証: https://atcoder.jp/contests/abc150/submissions/15829530
+    i, j, n = 1, 0, len(S)
+    Z = np.zeros_like(S)
+    Z[0] = n
+    while i < n:
+        while i+j < n and S[j] == S[i+j]:
+            j += 1
+        if j == 0:
+            i += 1
+            continue
+        Z[i] = j
+        d = 1
+        while i+d < n and d+Z[d] < j:
+            Z[i+d] = Z[d]
+            d += 1
+        i += d
+        j -= d
+    return Z
