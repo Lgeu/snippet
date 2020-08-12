@@ -12,7 +12,7 @@ def numba_compile(numba_config):
         from numba.pycc import CC
         cc = CC("my_module")
         for func, signature in numba_config:
-            vars()[func.__name__] = njit(signature)(func)
+            globals()[func.__name__] = njit(signature)(func)
             cc.export(func.__name__, signature)(func)
         cc.compile()
         exit()
@@ -74,9 +74,10 @@ def numba_pow(base, exp, mod):  # [numba_pow, "i8(i8,i8,i8)"],
 def z_algo(S):  # [z_algo, "i8[:](i8[:])"],
     # Z-algoirhm  O(n)
     # Z[i] := S と S[i:] で prefix が何文字一致しているか
-    # 検証: https://atcoder.jp/contests/abc150/submissions/15829530
+    # 検証1: https://atcoder.jp/contests/abc150/submissions/15829530
+    # 検証2: https://atcoder.jp/contests/abc141/submissions/15855247
     i, j, n = 1, 0, len(S)
-    Z = np.zeros_like(S)
+    Z = np.zeros(S.shape, dtype=np.int64)
     Z[0] = n
     while i < n:
         while i+j < n and S[j] == S[i+j]:
