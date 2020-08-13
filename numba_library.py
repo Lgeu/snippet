@@ -33,6 +33,10 @@ numba_compile([
 
 # >>> binary indexed tree >>>
 # 必要な要素数+1 の長さの ndarray の 1 要素目以降を使う
+def bitify(arr):  # [bitify, "void(i8[:])"],
+    # len(arr) は 2 冪 + 1
+    for i in range(1, len(arr)-1):
+        arr[i + (i & -i)] += arr[i]
 def bit_sum(bit, i):  # [bit_sum, "i8(i8[:],i8)"],
     # (0, i]
     res = 0
