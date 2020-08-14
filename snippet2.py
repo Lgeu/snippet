@@ -517,6 +517,192 @@ def minimum_enclosing_circle(points):
     return circle
 
 
+class Osa_k:
+    def __init__(self, n_max):
+        self.min_factor = min_factor = list(range(n_max+1))
+        for i in range(2, int(n_max**0.5)+1):
+            if min_factor[i] == i:
+                for j in range(i*i, n_max+1, i):
+                    if min_factor[j] == j:
+                        min_factor[j] = i
+
+    def __call__(self, n):
+        min_factor = self.min_factor
+        n_twoes = (n & -n).bit_length() - 1  # 最悪ケースでは速くなる
+        res = [2] * n_twoes
+        n >>= n_twoes
+        while n > 1:
+            p = min_factor[n]
+            res.append(p)
+            n //= p
+        return res
+
+
+def is_odd_permutation(A):
+    # [0, N) の順列が奇置換であるかを返す
+    # 参考: https://atcoder.jp/contests/chokudai_S001/submissions/5745441
+    A_ = A[:]
+    res = 0
+    for idx in range(len(A)):
+        a = A_[idx]
+        while a != idx:
+            A_[idx], A_[a] = A_[a], A_[idx]
+            res += 1
+            a = A_[idx]
+    return res % 2
+
+
+def rec2(x, y, a0, n, mod):
+    # 二項間漸化式 a_n = x * a_{n-1} + y
+    a = a0
+    while n:
+        n, m = divmod(n, 2)
+        if m:
+            a = (a * x + y) % mod
+        x, y = x * x % mod, (x * y + y) % mod
+    return a
+
+
+class Polynomial:
+    # 多項式
+    def __init__(self, coef, mod=10**9+7):
+        # 降べきの順
+        self.coef = coef
+        self.mod = mod
+
+    def __repr__(self):
+        return str(self.coef)
+
+    def __add__(self, other):
+        from itertools import zip_longest
+        coef1, coef2, mod = self.coef, other.coef, self.mod
+        res = [(c1 + c2) % mod for c1, c2 in zip_longest(coef1[::-1], coef2[::-1], fillvalue=0)]
+        while len(res) > 0 and res[-1] == 0:
+            del res[-1]
+        res.reverse()
+        return Polynomial(res, mod=mod)
+
+    def __mul__(self, other):
+        if isinstance(other, int):
+            other = Polynomial([other])
+        coef1, coef2, mod = self.coef, other.coef, self.mod
+        res = [0] * (len(coef1) + len(coef2) - 1)
+        for i, c1 in enumerate(coef1):
+            for j, c2 in enumerate(coef2, i):
+                res[j] = (res[j] + c1 * c2) % mod
+        return Polynomial(res, mod=mod)
+
+    def __divmod__(self, other):
+        coef1, coef2, mod = self.coef[:], other.coef, self.mod
+        assert coef2[0] == 1
+        quotient = []
+        n = len(coef1) - len(coef2) + 1
+        if n < 0:
+            return Polynomial([], mod=mod), Polynomial(coef1, mod=mod)
+        for i in range(n):
+            r = coef1[i]
+            quotient.append(r)
+            for j, c2 in enumerate(coef2, i):  # enumerate(coef2[1:], i+1) でもいい
+                coef1[j] = (coef1[j] - r * c2) % mod
+        return Polynomial(quotient, mod=mod), Polynomial(coef1[n:], mod=mod)
+
+    def __imod__(self, other):
+        coef1, coef2, mod = self.coef, other.coef, self.mod
+        n = len(coef1) - len(coef2) + 1
+        if n < 0:
+            return self
+        for i in range(n):
+            r = coef1[i]
+            for j, c2 in enumerate(coef2, i):
+                coef1[j] = (coef1[j] - r * c2) % mod
+        self.coef = coef1[n:]
+        return self
+
+def kitamasa(C, n, mod=10**9+7):
+    # C: 係数（a_n = C[0] * a_{n-1} + C[1] * a{n-2} + ...）
+    # n: 一番小さい初期値が a_i で求めたい項が a_j なら j-k
+    Q = Polynomial([1] + [-c for c in C], mod=mod)
+    res = Polynomial([1], mod=mod)
+    X = Polynomial([1, 0], mod=mod)
+    while n:
+        n, r = divmod(n, 2)
+        if r:
+            res = res * X
+            res %= Q
+        X = X * X
+        X %= Q
+    return res.coef
+
+
+class MaxClique:
+    # 最大クリーク
+    # Bron–Kerbosch algorithm (O(1.4422^|V|)) の枝刈りをしたもの
+    # 参考: https://atcoder.jp/contests/code-thanks-festival-2017-open/submissions/2691674
+    # 検証1: https://atcoder.jp/contests/code-thanks-festival-2017-open/submissions/7620028
+    # 検証2: https://judge.yosupo.jp/submission/12486
+    def __init__(self, n):
+        self.n = n
+        self.E = [0] * n
+        self.stk = [0] * n  # 最大クリークが入るスタック
+
+    def __repr__(self):
+        return "\n".join("{:0{}b}".format(e, self.n) for e in self.E)
+
+    def add_edge(self, v, u):
+        # assert v != u
+        self.E[v] |= 1 << u
+        self.E[u] |= 1 << v
+
+    def invert(self):
+        # 補グラフにする
+        n, E = self.n, self.E
+        mask = (1<<n) - 1  # 正の数にしないと popcount がバグる
+        for i in range(n):
+            E[i] = ~E[i] & (mask ^ 1<<i)  # 自己ループがあるとバグる
+
+    def solve(self):
+        n, E = self.n, self.E
+        deg = [bin(v).count("1") for v in E]
+        self.index = index = sorted(range(n), key=lambda x: deg[x], reverse=True)  # 頂点番号を次数の降順にソート
+        self.E_sorted = E_sorted = []  # E を 次数の降順に並び替えたもの
+        for v in index:
+            E_sorted_ = 0
+            E_v = E[v]
+            for i, u in enumerate(index):
+                if E_v >> u & 1:
+                    E_sorted_ |= 1 << i
+            E_sorted.append(E_sorted_)
+        cand = (1 << n) - 1  # 候補の集合
+        self.cans = 1  # 最大クリークを構成する集合  # 復元するときはこれを使う
+        self.ans = 1
+        self._dfs(0, cand)
+        return self.ans
+
+    def _dfs(self, elem_num, candi):
+        if self.ans < elem_num:
+            self.ans = elem_num
+            cans_ = 0
+            index = self.index
+            for s in self.stk[:elem_num]:
+                cans_ |= 1 << index[s]
+            self.cans = cans_
+        potential = elem_num + bin(candi).count("1")
+        if potential <= self.ans:
+            return
+        E_sorted = self.E_sorted
+        pivot = (candi & -candi).bit_length() - 1  # 候補から頂点をひとつ取り出す
+        smaller_candi = candi & ~E_sorted[pivot]  # pivot と直接結ばれていない頂点の集合（自己ループの無いグラフなので pivot を含む）
+        while smaller_candi and potential > self.ans:
+            next = smaller_candi & -smaller_candi
+            candi ^= next
+            smaller_candi ^= next
+            potential -= 1
+            next = next.bit_length() - 1
+            if next == pivot or smaller_candi & E_sorted[next]:
+                self.stk[elem_num] = next
+                self._dfs(elem_num + 1, candi & E_sorted[next])
+
+
 # リスト埋め込み用  # AtCoder なら 50000 要素くらいは埋め込める  # 圧縮率が高ければそれ以上も埋め込める
 def encode_list(lst):
     import array, gzip, base64

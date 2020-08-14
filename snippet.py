@@ -1,13 +1,12 @@
-# 拡張ユークリッド互除法
-# ax + by = gcd(a,b)の最小整数解を返す
-# 最大公約数はg
 def egcd(a, b):
+    # 拡張ユークリッド互除法
+    # ax + by = gcd(a,b)の最小整数解を返す
+    # 最大公約数はg
     if a == 0:
         return b, 0, 1
     else:
         g, y, x = egcd(b % a, a)
         return g, x - (b // a) * y, y
-
 
 def chineseRem(b1, m1, b2, m2):
     # 中国剰余定理
@@ -25,9 +24,9 @@ def chineseRem(b1, m1, b2, m2):
 def modinv(a, mod=10**9+7):
     return pow(a, mod-2, mod)
 
-# nCr mod m
-# rがn/2に近いと非常に重くなる
 def combination(n, r, mod=10**9+7):
+    # nCr mod m
+    # rがn/2に近いと非常に重くなる
     n1, r = n+1, min(r, n-r)
     numer = denom = 1
     for i in range(1, r+1):
@@ -35,25 +34,18 @@ def combination(n, r, mod=10**9+7):
         denom = denom * i % mod
     return numer * pow(denom, mod-2, mod) % mod
 
-# nHr mod m
 def H(n, r, mod=10**9+7):
+    # nHr mod m
     return combination(n+r-1, r, mod)
 
-# nCrをすべてのr(0<=r<=n)について求める
-# nC0, nC1, nC2, ... , nCn を求める
-# modinvが必要
 def combination_list(n, mod=10**9+7):
+    # nCrをすべてのr(0<=r<=n)について求める
+    # nC0, nC1, nC2, ... , nCn を求める
+    # modinvが必要
     lst = [1]
     for i in range(1, n+1):
         lst.append(lst[-1] * (n+1-i) % mod * modinv(i, mod) % mod)
     return lst
-
-# 階乗のmod逆元のリストを返す O(n)
-def facinv_list(n, mod=10**9+7):
-    L = [1]
-    for i in range(1, n+1):
-        L.append(L[i-1] * modinv(i, mod) % mod)
-    return L
 
 def make_modinv_list(n, mod=10**9+7):
     # 0 から n までの mod 逆元のリストを返す O(n)
@@ -61,7 +53,6 @@ def make_modinv_list(n, mod=10**9+7):
     for i in range(2, n+1):
         modinv.append(mod - mod//i * modinv[mod%i] % mod)
     return modinv
-
 
 class Combination:
     def __init__(self, n_max, mod=10**9+7):
@@ -127,7 +118,6 @@ class Combination:
     def bell(self, n, k):  # n 要素を k グループ以下に分割する場合の数  O(k**2 + k*log(mod))
         return sum(self.stirling_second(n, j) for j in range(1, k+1)) % self.mod
 
-
 def make_prime_checker(n):
     # n までの自然数が素数かどうかを表すリストを返す  O(nloglogn)
     is_prime = [False, True, False, False, False, True] * (n//6+1)
@@ -162,26 +152,6 @@ def fast_prime_factorization_many(lst):
     res = Popen(["factor"] + list(map(str, lst)), stdout=PIPE).communicate()[0].split(b"\n")[:-1]
     return [list(map(int, r.split()[1:])) for r in res]
 
-class Osa_k:
-    def __init__(self, n_max):
-        self.min_factor = min_factor = list(range(n_max+1))
-        for i in range(2, int(n_max**0.5)+1):
-            if min_factor[i] == i:
-                for j in range(i*i, n_max+1, i):
-                    if min_factor[j] == j:
-                        min_factor[j] = i
-
-    def __call__(self, n):
-        min_factor = self.min_factor
-        n_twoes = (n & -n).bit_length() - 1  # 最悪ケースでは速くなる
-        res = [2] * n_twoes
-        n >>= n_twoes
-        while n > 1:
-            p = min_factor[n]
-            res.append(p)
-            n //= p
-        return res
-
 def miller_rabin(n):
     # 確率的素数判定（ミラーラビン素数判定法）
     # 素数なら確実に True を返す、合成数なら確率的に False を返す
@@ -202,15 +172,9 @@ def miller_rabin(n):
         if y!=m1 and t&1==0: return False
     return True
 
-# Binary Indexed Tree
-"""
-    0-indexed
-    # 使用例
-    bit = Bit(10)  # 要素数
-    bit.add(2, 10)
-    print(bit.sum(5))  # 10
-"""
+
 class Bit:
+    # Binary Indexed Tree
     def __init__(self, n):
         self.size = n
         self.tree = [0]*(n+1)
@@ -303,57 +267,8 @@ class Bit2:
         return res
 
 
-#E = defaultdict(lambda: defaultdict(lambda: float("inf")))
-from collections import defaultdict
-import heapq
-class Dijkstra:
-    # 計算量 O((E+V)logV)
-
-    # adjはdefaultdictのリスト
-    def dijkstra(self, adj, start, goal=None):
-
-        num = len(adj)  # グラフのノード数
-        self.dist = [float('inf') for i in range(num)]  # 始点から各頂点までの最短距離を格納する
-        self.prev = [float('inf') for i in range(num)]  # 最短経路における，その頂点の前の頂点のIDを格納する
-
-        self.dist[start] = 0
-        q = [(0, start)]  # プライオリティキュー．各要素は，(startからある頂点vまでの仮の距離, 頂点vのID)からなるタプル
-
-        while len(q) != 0:
-            prov_cost, src = heapq.heappop(q)  # pop
-
-            # プライオリティキューに格納されている最短距離が，現在計算できている最短距離より大きければ，distの更新をする必要はない
-            if self.dist[src] < prov_cost:
-                continue
-
-            # 探索で辺を見つける場合ここに書く
-
-
-            # 他の頂点の探索
-            for dest, cost in adj[src].items():
-                if self.dist[dest] > self.dist[src] + cost:
-                    self.dist[dest] = self.dist[src] + cost  # distの更新
-                    heapq.heappush(q, (self.dist[dest], dest))  # キューに新たな仮の距離の情報をpush
-                    self.prev[dest] = src  # 前の頂点を記録
-
-        if goal is not None:
-            return self.get_path(goal, self.prev)
-        else:
-            return self.dist
-
-    def get_path(self, goal, prev):
-        path = [goal]  # 最短経路
-        dest = goal
-
-        # 終点から最短経路を逆順に辿る
-        while prev[dest] != float('inf'):
-            path.append(prev[dest])
-            dest = prev[dest]
-
-        # 経路をreverseして出力
-        return list(reversed(path))
-
 def dijkstra(E, start):
+    # ダイクストラ法
     from heapq import heappush, heappop
     N = len(E)
     inf = float("inf")
@@ -399,8 +314,8 @@ def shortest_path_faster_algorithm(E, start):
                     q.append(u)
     return distance
 
-# unionfind
-class Uf:
+
+class UnionFind:
     def __init__(self, N):
         self.p = list(range(N))
         self.rank = [0] * N
@@ -409,7 +324,6 @@ class Uf:
     def root(self, x):
         if self.p[x] != x:
             self.p[x] = self.root(self.p[x])
-
         return self.p[x]
 
     def same(self, x, y):
@@ -418,9 +332,8 @@ class Uf:
     def unite(self, x, y):
         u = self.root(x)
         v = self.root(y)
-
-        if u == v: return
-
+        if u == v:
+            return
         if self.rank[u] < self.rank[v]:
             self.p[u] = v
             self.size[v] += self.size[u]
@@ -429,7 +342,6 @@ class Uf:
             self.p[v] = u
             self.size[u] += self.size[v]
             self.size[v] = 0
-
             if self.rank[u] == self.rank[v]:
                 self.rank[u] += 1
 
@@ -437,45 +349,36 @@ class Uf:
         return self.size[self.root(x)]
 
 
+def fast_zeta_transform_superset(arr):
+    # 上位集合の高速ゼータ変換  O(nlog(n))
+    # fast_zeta_transform_superset([1]*8) => [8, 4, 4, 2, 4, 2, 2, 1]
+    # 添字 and での畳み込みに使う
+    n = len(arr)
+    assert n & -n == n  # n は 2 冪
+    for i in range(n.bit_length()-1):
+        for s in range(n):
+            if s>>i&1 == 0:
+                arr[s] -= arr[s|1<<i]  # -= にすると逆変換
+    return arr
 
-def norm(x1, y1, x2, y2):
-    return ((x1-x2)**2 + (y1-y2)**2)**0.5
-def d(a, b, c, x, y):
-    return abs(a*x + b*y + c) / (a**2 + b**2)**0.5
-def points2line(x1, y1, x2, y2):
-    la = y1 - y2
-    lb = x2 - x1
-    lc = x1 * (y2 - y1) + y1 * (x1 - x2)
-    return la, lb, lc
-
-
-"""
-# 高速ゼータ変換
-
-# 自身を含む集合を全て挙げる方  # 上位集合の高速ゼータ変換
-N = 3
-f = [{i} for i in range(1<<N)]
-for i in range(N):
-    for j in range(1<<N):
-        if not (j & 1<<i):
-            f[j] |= f[j | (1<<i)]  # 総和は +=  # -=にすると逆変換になる
-print(f)
-
-# 部分集合をすべて挙げる方  # 下位集合の高速ゼータ変換
-f = [{i} for i in range(1<<N)]
-for i in range(N):
-    for j in range(1<<N):
-        if j & 1<<i:
-            f[j] |= f[j ^ (1<<i)]
-print(f)
+def fast_zeta_transform_subset(arr):
+    # 下位集合の高速ゼータ変換  O(nlog(n))
+    # fast_zeta_transform_subset([1]*8) => [1, 2, 2, 4, 2, 4, 4, 8]
+    # 添字 or での畳み込みに使う
+    n = len(arr)
+    assert n & -n == n  # n は 2 冪
+    for i in range(n.bit_length()-1):
+        for s in range(n):
+            if s>>i&1:
+                arr[s] += arr[s^1<<i]  # -= にすると逆変換
+    return arr
 
 # 倍数集合の高速ゼータ変換: https://atcoder.jp/contests/agc038/submissions/7671865
-"""
 
 
-# 参考: https://atcoder.jp/contests/abc014/submissions/3935971
 class SegmentTree(object):
     # 検証: https://atcoder.jp/contests/nikkei2019-2-qual/submissions/8434117
+    # 参考: https://atcoder.jp/contests/abc014/submissions/3935971
     __slots__ = ["elem_size", "tree", "default", "op", "real_size"]
 
     def __init__(self, a, default, op):
@@ -520,19 +423,6 @@ class SegmentTree(object):
     def debug(self):
         print(self.tree[self.elem_size:self.elem_size+self.real_size])
 
-"""
-C = [int(input()) for _ in range(N)]
-
-idx = [0] * N
-for i, c in enumerate(C):
-    idx[c-1] = i
-
-seg = SegmentTree([0]*(N+1), 0, min)
-for i in range(N):
-    idx_ = idx[i]
-    seg.set_value(idx_, seg.get_value(0, idx_)-1)
-print(seg.get_value(0, N+1)+N)
-"""
 
 def manacher(S):
     # 最長回文 O(n)
@@ -554,8 +444,8 @@ def manacher(S):
         r -= d
     return R
 
-def z_algo(S):
-    # Z-algoirhm  O(n)
+def z_algorithm(S):
+    # Z アルゴリズム  O(n)
     # Z[i] := S と S[i:] で prefix が何文字一致しているか
     # 検証: https://atcoder.jp/contests/arc055/submissions/14179788
     i, j, n = 1, 0, len(S)
@@ -635,122 +525,6 @@ class Dinic:
         return flow
 
 
-# 凸包 Monotone Chain O(nlogn)
-# original author: matsu7874
-# 参考: https://matsu7874.hatenablog.com/entry/2018/12/17/025713
-# 複素数版は https://atcoder.jp/contests/abc139/submissions/7301049
-def get_convex_hull(points):
-    def det(p, q):
-        return p[0] * q[1] - p[1] * q[0]
-    def sub(p, q):
-        return (p[0] - q[0], p[1] - q[1])
-    points.sort()
-    ch = []
-    for p in points:
-        while len(ch) > 1:
-            v_cur = sub(ch[-1], ch[-2])
-            v_new = sub(p, ch[-2])
-            if det(v_cur, v_new) > 0:
-                break
-            ch.pop()
-        ch.append(p)
-    t = len(ch)
-    for p in points[-2::-1]:
-        while len(ch) > t:
-            v_cur = sub(ch[-1], ch[-2])
-            v_new = sub(p, ch[-2])
-            if det(v_cur, v_new) > 0:
-                break
-            ch.pop()
-        ch.append(p)
-    return ch[:-1]
-
-
-# 線分 AB と CD の交差判定
-def cross(x1, y1, x2, y2, x3, y3, x4, y4):
-    def f(x, y, x1, y1, x2, y2):  # 直線上にあるとき 0 になる
-        return (x1-x2)*(y-y1)+(y1-y2)*(x1-x)
-
-    # 点 C と点 D が直線 AB の異なる側にある
-    b1 = f(x3, y3, x1, y1, x2, y2) * f(x4, y4, x1, y1, x2, y2) < 0
-
-    # 点 A と点 B が直線 CD の異なる側にある
-    b2 = f(x1, y1, x3, y3, x4, y4) * f(x2, y2, x3, y3, x4, y4) < 0
-
-    return b1 and b2
-
-
-def intersection(circle, polygon):
-    # circle: (x, y, r)
-    # polygon: [(x1, y1), (x2, y2), ...]
-    # 円と多角形の共通部分の面積
-    # 多角形の点が反時計回りで与えられれば正の値、時計回りなら負の値を返す
-    from math import acos, hypot, isclose, sqrt
-    def cross(v1, v2):  # 外積
-        x1, y1 = v1
-        x2, y2 = v2
-        return x1 * y2 - x2 * y1
-
-    def dot(v1, v2):  # 内積
-        x1, y1 = v1
-        x2, y2 = v2
-        return x1 * x2 + y1 * y2
-
-    def seg_intersection(circle, seg):
-        # 円と線分の交点（円の中心が原点でない場合は未検証）
-        x0, y0, r = circle
-        p1, p2 = seg
-        x1, y1 = p1
-        x2, y2 = p2
-
-        p1p2 = (x2 - x1) ** 2 + (y2 - y1) ** 2
-        op1 = (x1 - x0) ** 2 + (y1 - y0) ** 2
-        rr = r * r
-        dp = dot((x1 - x0, y1 - y0), (x2 - x1, y2 - y1))
-
-        d = dp * dp - p1p2 * (op1 - rr)
-        ps = []
-
-        if isclose(d, 0.0, abs_tol=1e-9):
-            t = -dp / p1p2
-            if ge(t, 0.0) and le(t, 1.0):
-                ps.append((x1 + t * (x2 - x1), y1 + t * (y2 - y1)))
-        elif d > 0.0:
-            t1 = (-dp - sqrt(d)) / p1p2
-            if ge(t1, 0.0) and le(t1, 1.0):
-                ps.append((x1 + t1 * (x2 - x1), y1 + t1 * (y2 - y1)))
-            t2 = (-dp + sqrt(d)) / p1p2
-            if ge(t2, 0.0) and le(t2, 1.0):
-                ps.append((x1 + t2 * (x2 - x1), y1 + t2 * (y2 - y1)))
-
-        # assert all(isclose(r, hypot(x, y)) for x, y in ps)
-        return ps
-
-    def le(f1, f2):  # less equal
-        return f1 < f2 or isclose(f1, f2, abs_tol=1e-9)
-
-    def ge(f1, f2):  # greater equal
-        return f1 > f2 or isclose(f1, f2, abs_tol=1e-9)
-
-    x, y, r = circle
-    polygon = [(xp-x, yp-y) for xp, yp in polygon]
-    area = 0.0
-    for p1, p2 in zip(polygon, polygon[1:] + [polygon[0]]):
-        ps = seg_intersection((0, 0, r), (p1, p2))
-        for pp1, pp2 in zip([p1] + ps, ps + [p2]):
-            c = cross(pp1, pp2)  # pp1 と pp2 の位置関係によって正負が変わる
-            if c == 0:  # pp1, pp2, 原点が同一直線上にある場合
-                continue
-            d1 = hypot(*pp1)
-            d2 = hypot(*pp2)
-            if le(d1, r) and le(d2, r):
-                area += c / 2  # pp1, pp2, 原点を結んだ三角形の面積
-            else:
-                t = acos(dot(pp1, pp2) / (d1 * d2))  # pp1-原点とpp2-原点の成す角
-                sign = 1.0 if c >= 0 else -1.0
-                area += sign * r * r * t / 2  # 扇形の面積
-    return area
-
 def lis(A: list):  # 最長増加部分列
     # original author: ikatakos
     # https://ikatakos.com/pot/programming_algorithm/dynamic_programming/longest_common_subsequence
@@ -766,50 +540,6 @@ def lis(A: list):  # 最長増加部分列
             L[bisect_left(L, a)] = a
     return len(L)
 
-class Lca:  # 最近共通祖先
-    def __init__(self, E, root):
-        import sys
-        sys.setrecursionlimit(500000)
-        self.root = root
-        self.E = E  # V<V>
-        self.n = len(E)  # 頂点数
-        self.logn = 1  # n < 1<<logn  ぴったりはだめ
-        while self.n >= (1<<self.logn):
-            self.logn += 1
-
-        # parent[n][v] = ノード v から 1<<n 個親をたどったノード
-        self.parent = [[-1]*self.n for _ in range(self.logn)]
-
-        self.depth = [0] * self.n
-        self.dfs(root, -1, 0)
-        for k in range(self.logn-1):
-            for v in range(self.n):
-                p_ = self.parent[k][v]
-                if p_ >= 0:
-                    self.parent[k+1][v] = self.parent[k][p_]
-
-    def dfs(self, v, p, dep):
-        # ノード番号、親のノード番号、深さ
-        self.parent[0][v] = p
-        self.depth[v] = dep
-        for e in self.E[v]:
-            if e != p:
-                self.dfs(e, v, dep+1)
-
-    def get(self, u, v):
-        if self.depth[u] > self.depth[v]:
-            u, v = v, u  # self.depth[u] <= self.depth[v]
-        dep_diff = self.depth[v]-self.depth[u]
-        for k in range(self.logn):
-            if dep_diff >> k & 1:
-                v = self.parent[k][v]
-        if u==v:
-            return u
-        for k in range(self.logn-1, -1, -1):
-            if self.parent[k][u] != self.parent[k][v]:
-                u = self.parent[k][u]
-                v = self.parent[k][v]
-        return self.parent[0][u]
 
 class NewtonInterpolation:
     # ニュートン補間  O(n^2)  n は次元
@@ -896,8 +626,9 @@ class RollingHash:
                 ng = c
         return ok
 
+
 def convolve(A, B):
-    # 畳み込み  # 要素は整数
+    # 畳み込み (Numpy)  # 要素は整数
     # 3 つ以上の場合は一度にやった方がいい
     import numpy as np
     dtype = np.int64  # np.float128 は windows では動かない？
@@ -913,7 +644,7 @@ def convolve(A, B):
     return np.rint(ifft(fft(AB[0]) * fft(AB[1]))).astype(np.int64)[:n]
 
 def garner(A, M, mod):
-    # Garner のアルゴリズム
+    # Garner のアルゴリズム (NumPy)
     # 参考: https://math314.hateblo.jp/entry/2015/05/07/014908
     M.append(mod)
     coffs = [1] * len(M)
@@ -926,7 +657,7 @@ def garner(A, M, mod):
     return constants[-1]
 
 def convolve_mod(A, B, mod=10**9+7):
-    # 任意 mod 畳み込み
+    # 任意 mod 畳み込み (NumPy)
     # 検証1: 注文の多い高橋商店 (TLE): https://atcoder.jp/contests/arc028/submissions/7467522
     # 検証2: [yosupo] Convolution (mod 1,000,000,007): https://judge.yosupo.jp/submission/12504
     
@@ -951,7 +682,7 @@ def convolve_mod(A, B, mod=10**9+7):
 
 
 def scc(E, n_vertex):
-    # 強連結成分分解  # E は [[a1, b1], [a2, b2], ... ] の形
+    # 強連結成分分解 (NumPy, SciPy)  # E は [[a1, b1], [a2, b2], ... ] の形
     # 返り値は 強連結成分の数 と 各頂点がどの強連結成分に属しているか
     # numpy いらないのは https://tjkendev.github.io/procon-library/python/graph/scc.html
     import numpy as np
@@ -960,6 +691,7 @@ def scc(E, n_vertex):
     graph = csr_matrix((np.ones(len(E)), (A, B)), (n_vertex, n_vertex))
     n_components, labels = csgraph.connected_components(graph, connection='strong')
     return n_components, labels
+
 
 def distribute(n, person, min, max, mode="even"):
     # n 個を person 人に分配する
@@ -987,18 +719,6 @@ def distribute(n, person, min, max, mode="even"):
     else:
         raise ValueError("'mode' must be 'even' or 'greedy'.")
 
-def is_odd_permutation(A):
-    # [0, N) の順列が奇置換であるかを返す
-    # 参考: https://atcoder.jp/contests/chokudai_S001/submissions/5745441
-    A_ = A[:]
-    res = 0
-    for idx in range(len(A)):
-        a = A_[idx]
-        while a != idx:
-            A_[idx], A_[a] = A_[a], A_[idx]
-            res += 1
-            a = A_[idx]
-    return res % 2
 
 def xorshift(seed=123456789):  # 31 bit xorshift
     y = seed
@@ -1009,153 +729,6 @@ def xorshift(seed=123456789):  # 31 bit xorshift
         return y % (b-a+1) + a
     return randint
 
-def rec2(x, y, a0, n, mod):
-    # 二項間漸化式 a_n = x * a_{n-1} + y
-    a = a0
-    while n:
-        n, m = divmod(n, 2)
-        if m:
-            a = (a * x + y) % mod
-        x, y = x * x % mod, (x * y + y) % mod
-    return a
-
-class Polynomial:
-    # 多項式
-    def __init__(self, coef, mod=10**9+7):
-        # 降べきの順
-        self.coef = coef
-        self.mod = mod
-
-    def __repr__(self):
-        return str(self.coef)
-
-    def __add__(self, other):
-        from itertools import zip_longest
-        coef1, coef2, mod = self.coef, other.coef, self.mod
-        res = [(c1 + c2) % mod for c1, c2 in zip_longest(coef1[::-1], coef2[::-1], fillvalue=0)]
-        while len(res) > 0 and res[-1] == 0:
-            del res[-1]
-        res.reverse()
-        return Polynomial(res, mod=mod)
-
-    def __mul__(self, other):
-        if isinstance(other, int):
-            other = Polynomial([other])
-        coef1, coef2, mod = self.coef, other.coef, self.mod
-        res = [0] * (len(coef1) + len(coef2) - 1)
-        for i, c1 in enumerate(coef1):
-            for j, c2 in enumerate(coef2, i):
-                res[j] = (res[j] + c1 * c2) % mod
-        return Polynomial(res, mod=mod)
-
-    def __divmod__(self, other):
-        coef1, coef2, mod = self.coef[:], other.coef, self.mod
-        assert coef2[0] == 1
-        quotient = []
-        n = len(coef1) - len(coef2) + 1
-        if n < 0:
-            return Polynomial([], mod=mod), Polynomial(coef1, mod=mod)
-        for i in range(n):
-            r = coef1[i]
-            quotient.append(r)
-            for j, c2 in enumerate(coef2, i):  # enumerate(coef2[1:], i+1) でもいい
-                coef1[j] = (coef1[j] - r * c2) % mod
-        return Polynomial(quotient, mod=mod), Polynomial(coef1[n:], mod=mod)
-
-    def __imod__(self, other):
-        coef1, coef2, mod = self.coef, other.coef, self.mod
-        n = len(coef1) - len(coef2) + 1
-        if n < 0:
-            return self
-        for i in range(n):
-            r = coef1[i]
-            for j, c2 in enumerate(coef2, i):
-                coef1[j] = (coef1[j] - r * c2) % mod
-        self.coef = coef1[n:]
-        return self
-
-def kitamasa(C, n, mod=10**9+7):
-    # C: 係数（a_n = C[0] * a_{n-1} + C[1] * a{n-2} + ...）
-    # n: 一番小さい初期値が a_i で求めたい項が a_j なら j-k
-    Q = Polynomial([1] + [-c for c in C], mod=mod)
-    res = Polynomial([1], mod=mod)
-    X = Polynomial([1, 0], mod=mod)
-    while n:
-        n, r = divmod(n, 2)
-        if r:
-            res = res * X
-            res %= Q
-        X = X * X
-        X %= Q
-    return res.coef
-
-class MaxClique:
-    # 最大クリーク
-    # Bron–Kerbosch algorithm (O(1.4422^|V|)) の枝刈りをしたもの
-    # 参考: https://atcoder.jp/contests/code-thanks-festival-2017-open/submissions/2691674
-    # 検証1: https://atcoder.jp/contests/code-thanks-festival-2017-open/submissions/7620028
-    # 検証2: https://judge.yosupo.jp/submission/12486
-    def __init__(self, n):
-        self.n = n
-        self.E = [0] * n
-        self.stk = [0] * n  # 最大クリークが入るスタック
-
-    def __repr__(self):
-        return "\n".join("{:0{}b}".format(e, self.n) for e in self.E)
-
-    def add_edge(self, v, u):
-        # assert v != u
-        self.E[v] |= 1 << u
-        self.E[u] |= 1 << v
-
-    def invert(self):
-        # 補グラフにする
-        n, E = self.n, self.E
-        mask = (1<<n) - 1  # 正の数にしないと popcount がバグる
-        for i in range(n):
-            E[i] = ~E[i] & (mask ^ 1<<i)  # 自己ループがあるとバグる
-
-    def solve(self):
-        n, E = self.n, self.E
-        deg = [bin(v).count("1") for v in E]
-        self.index = index = sorted(range(n), key=lambda x: deg[x], reverse=True)  # 頂点番号を次数の降順にソート
-        self.E_sorted = E_sorted = []  # E を 次数の降順に並び替えたもの
-        for v in index:
-            E_sorted_ = 0
-            E_v = E[v]
-            for i, u in enumerate(index):
-                if E_v >> u & 1:
-                    E_sorted_ |= 1 << i
-            E_sorted.append(E_sorted_)
-        cand = (1 << n) - 1  # 候補の集合
-        self.cans = 1  # 最大クリークを構成する集合
-        self.ans = 1
-        self._dfs(0, cand)
-        return self.ans
-
-    def _dfs(self, elem_num, candi):
-        if self.ans < elem_num:
-            self.ans = elem_num
-            cans_ = 0
-            index = self.index
-            for s in self.stk[:elem_num]:
-                cans_ |= 1 << index[s]
-            self.cans = cans_
-        potential = elem_num + bin(candi).count("1")
-        if potential <= self.ans:
-            return
-        E_sorted = self.E_sorted
-        pivot = (candi & -candi).bit_length() - 1  # 候補から頂点をひとつ取り出す
-        smaller_candi = candi & ~E_sorted[pivot]  # pivot と直接結ばれていない頂点の集合（自己ループの無いグラフなので pivot を含む）
-        while smaller_candi and potential > self.ans:
-            next = smaller_candi & -smaller_candi
-            candi ^= next
-            smaller_candi ^= next
-            potential -= 1
-            next = next.bit_length() - 1
-            if next == pivot or smaller_candi & E_sorted[next]:
-                self.stk[elem_num] = next
-                self._dfs(elem_num + 1, candi & E_sorted[next])
 
 """
 # 重み付き UnionFind https://atcoder.jp/contests/code-festival-2016-quala/submissions/8336387
@@ -1165,25 +738,11 @@ class MaxClique:
 A = csgraph.dijkstra(X, indices=0)
 
 zip(*[iter(Ans)]*3)  # 3 個ずつ
+zip(*[iter(map(int, sys.stdin.read().split()))]*4):
 
 https://github.com/Lgeu/snippet/
 import sys
 input = sys.stdin.readline
-zip(*[iter(map(int, sys.stdin.read().split()))]*4):
 C = np.frombuffer(buf.read(), dtype="S1").reshape(H, W+1)[:, :-1].T
-def input():
-    return sys.stdin.readline()[:-1]
-
-from functools import lru_cache
-@lru_cache(maxsize=None)
-
-import sys
-sys.setrecursionlimit(500000)
-
-N = int(input())
-N, K = map(int, input().split())
-L = [int(input()) for _ in range(N)]
-A = list(map(int, input().split()))
-S = [list(map(int, input().split())) for _ in range(H)]
 """
 
