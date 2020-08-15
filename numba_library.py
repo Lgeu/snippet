@@ -64,7 +64,8 @@ def inversion_number(arr):  # [inversion_number, "i8(f8[:])"],
     return res
 
 
-def numba_pow(base, exp, mod):  # [numba_pow, "i8(i8,i8,i8)"],
+def pow_mod(base, exp):  # [numba_pow, "i8(i8,i8)"],
+    # mod はグローバル変数を参照
     exp %= mod - 1
     res = 1
     while exp:
@@ -73,6 +74,24 @@ def numba_pow(base, exp, mod):  # [numba_pow, "i8(i8,i8,i8)"],
         base = base * base % mod
         exp //= 2
     return res
+
+def comb_cunstruct(n):  # [comb_cunstruct, "Tuple((i8[:],i8[:]))(i8,)"],
+    # mod はグローバル変数を参照
+    fac = np.empty(n + 1, dtype=np.int64)
+    facinv = np.empty(n + 1, dtype=np.int64)
+    fac[0] = f = 1
+    for i in range(1, n + 1):
+        f = f * i % mod
+        fac[i] = f
+    f = pow_mod(f, -1)
+    for i in range(n, -1, -1):
+        facinv[i] = f
+        f = f * i % mod
+    return fac, facinv
+
+def comb(n, r, fac, facinv):  # [comb, "i8(i8,i8,i8[:],i8[:])"],
+    # mod はグローバル変数を参照
+    return fac[n] * facinv[r] % mod * facinv[n - r] % mod
 
 
 def z_algo(S):  # [z_algo, "i8[:](i8[:])"],
@@ -97,3 +116,65 @@ def z_algo(S):  # [z_algo, "i8[:](i8[:])"],
         i += d
         j -= d
     return Z
+
+
+from functools import reduce
+def rerooting(n, edges):  # [rerooting, "(i8,i8[:,:],i8[:],i8[:])"],
+    # 全方位木 dp
+    # 参考1: https://qiita.com/keymoon/items/2a52f1b0fb7ef67fb89e
+    # 参考2: https://atcoder.jp/contests/abc160/submissions/15255726
+    # 検証: https://atcoder.jp/contests/abc160/submissions/15971370
+
+    # >>> ここを変える >>>
+    # 必要な情報は引数に持たせる
+    identity = (1, 0)
+    def merge(a, b):
+        return a[0] * b[0] % mod * comb(a[1] + b[1], a[1], fac, facinv) % mod, a[1] + b[1]
+    def add_node(value, idx):
+        return value[0], value[1] + 1
+    # <<< ここを変える <<<
+
+    G = [[0]*0 for _ in range(n)]
+    for i in range(n-1):
+        a, b = edges[i]
+        G[a].append(b)
+        G[b].append(a)
+    # step 1
+    order = []  # 行きがけ順
+    stack = [0]
+    while stack:
+        v = stack.pop()
+        order.append(v)
+        for u in G[v]:
+            stack.append(u)
+            G[u].remove(v)
+    # 下から登る
+    dp_down = [identity] * n  # 自身とその下
+    for v in order[:0:-1]:
+        dp_down[v] = add_node(reduce(
+            merge, [dp_down[u] for u in G[v]], identity
+        ), v)
+    # step 2
+    # 上から降りる
+    dp_up = [identity] * n  # 親とその先
+    for v in order:
+        Gv = G[v]
+        if len(Gv) == 0:
+            continue
+        cum = identity
+        right = [identity]
+        for u in Gv[:0:-1]:
+            cum = merge(dp_down[u], cum)
+            right.append(cum)
+        right.reverse()
+        cum = dp_up[v]
+        for u, cum_r in zip(Gv, right):
+            dp_up[u] = add_node(merge(cum, cum_r), v)
+            cum = merge(cum, dp_down[u])
+    results = [identity] * 0
+    for v, Gv in enumerate(G):
+        results.append(add_node(
+            reduce(merge, [dp_down[u] for u in Gv], dp_up[v]), v
+        ))
+    return np.array(results)
+

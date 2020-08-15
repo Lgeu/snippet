@@ -703,6 +703,54 @@ class MaxClique:
                 self._dfs(elem_num + 1, candi & E_sorted[next])
 
 
+def rerooting(n, edges, identity, merge, add_node):
+    # 全方位木 dp
+    # 参考1: https://qiita.com/keymoon/items/2a52f1b0fb7ef67fb89e
+    # 参考2: https://atcoder.jp/contests/abc160/submissions/15255726
+    # 検証: Distributing Integers https://atcoder.jp/contests/abc160/submissions/15971070
+    from functools import reduce
+    G = [[] for _ in range(n)]
+    for a, b in edges:
+        G[a].append(b)
+        G[b].append(a)
+    # step 1
+    order = []  # 行きがけ順
+    stack = [0]
+    while stack:
+        v = stack.pop()
+        order.append(v)
+        for u in G[v]:
+            stack.append(u)
+            G[u].remove(v)
+    # 下から登る
+    dp_down = [0] * n  # 自身とその下
+    for v in order[:0:-1]:
+        dp_down[v] = add_node(reduce(
+            merge, (dp_down[u] for u in G[v]), identity
+        ), v)
+    # step 2
+    # 上から降りる
+    dp_up = [identity] * n  # 親とその先
+    for v in order:
+        Gv = G[v]
+        if len(Gv) == 0:
+            continue
+        cum = identity
+        right = [identity]
+        for u in Gv[:0:-1]:
+            cum = merge(dp_down[u], cum)
+            right.append(cum)
+        right.reverse()
+        cum = dp_up[v]
+        for u, cum_r in zip(Gv, right):
+            dp_up[u] = add_node(merge(cum, cum_r), v)
+            cum = merge(cum, dp_down[u])
+    results = [add_node(
+        reduce(merge, (dp_down[u] for u in Gv), dp_up[v]), v
+    ) for v, Gv in enumerate(G)]
+    return results
+
+
 # リスト埋め込み用  # AtCoder なら 50000 要素くらいは埋め込める  # 圧縮率が高ければそれ以上も埋め込める
 def encode_list(lst):
     import array, gzip, base64
