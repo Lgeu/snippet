@@ -41,10 +41,9 @@ def H(n, r, mod=10**9+7):
 def combination_list(n, mod=10**9+7):
     # nCrをすべてのr(0<=r<=n)について求める
     # nC0, nC1, nC2, ... , nCn を求める
-    # modinvが必要
     lst = [1]
     for i in range(1, n+1):
-        lst.append(lst[-1] * (n+1-i) % mod * modinv(i, mod) % mod)
+        lst.append(lst[-1] * (n+1-i) % mod * pow(i, mod-2, mod) % mod)
     return lst
 
 def make_modinv_list(n, mod=10**9+7):
@@ -70,9 +69,6 @@ class Combination:
             facinv.append(f)
         facinv.reverse()
 
-    # "n 要素" は区別できる n 要素
-    # "k グループ" はちょうど k グループ
-
     def __call__(self, n, r):  # self.C と同じ
         return self.fac[n] * self.facinv[r] % self.mod * self.facinv[n-r] % self.mod
 
@@ -87,6 +83,9 @@ class Combination:
     def H(self, n, r):
         if (n == 0 and r > 0) or r < 0: return 0
         return self.fac[n+r-1] * self.facinv[r] % self.mod * self.facinv[n-1] % self.mod
+
+    # "n 要素" は区別できる n 要素
+    # "k グループ" はちょうど k グループ
 
     def rising_factorial(self, n, r):  # 上昇階乗冪 n * (n+1) * ... * (n+r-1)
         return self.fac[n+r-1] * self.facinv[n-1] % self.mod

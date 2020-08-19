@@ -119,7 +119,7 @@ def z_algo(S):  # [z_algo, "i8[:](i8[:])"],
 
 
 from functools import reduce
-def rerooting(n, edges):  # [rerooting, "(i8,i8[:,:],i8[:],i8[:])"],
+def rerooting(n, edges):  # [rerooting, "(i8,i8[:,:])"],
     # 全方位木 dp
     # 参考1: https://qiita.com/keymoon/items/2a52f1b0fb7ef67fb89e
     # 参考2: https://atcoder.jp/contests/abc160/submissions/15255726

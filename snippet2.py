@@ -552,7 +552,7 @@ def is_odd_permutation(A):
     return res % 2
 
 
-def rec2(x, y, a0, n, mod):
+def recurrence_relation_1(x, y, a0, n, mod):
     # 二項間漸化式 a_n = x * a_{n-1} + y
     a = a0
     while n:
@@ -560,6 +560,22 @@ def rec2(x, y, a0, n, mod):
         if m:
             a = (a * x + y) % mod
         x, y = x * x % mod, (x * y + y) % mod
+    return a
+
+def recurrence_relation_2(r, b, c, a0, n, mod):
+    # 二項間漸化式 a_n = r * a_{n-1} + b * n + c
+    # 検証: https://atcoder.jp/contests/abc129/submissions/16044714
+    a = a0
+    n_ = 0
+    c += b  # これをなくすと a_{n+1} = r * a_n + b * n + c になる
+    diff = 1
+    while n:
+        n, m = divmod(n, 2)
+        if m:
+            a = (a * r + b * n_ + c) % mod
+            n_ += diff
+        r, b, c = r*r%mod, (r*b+b)%mod, (r*c+b*diff+c)%mod
+        diff <<= 1
     return a
 
 
