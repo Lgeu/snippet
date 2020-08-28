@@ -118,6 +118,48 @@ def z_algo(S):  # [z_algo, "i8[:](i8[:])"],
     return Z
 
 
+def sort_edges(N, edges_):  # [sort_edges, "Tuple((i8[:],i8[:]))(i8,i8[:,:])"],
+    # N: 頂点番号の最大値
+    M = len(edges_)
+    edges = np.empty((M * 2, 2), dtype=np.int64)
+    edges[:M] = edges_
+    edges[M:] = edges_[:, ::-1]
+    order = np.argsort(edges[:, 0])  # O(N) にできなくもない
+    edges = edges[order, 1]
+    c = np.zeros(N+1, dtype=np.int64)
+    c_ = np.bincount(edges_.ravel())  # minlength を使わせて
+    c[:len(c_)] = c_
+    c = np.cumsum(c)
+    lefts = np.zeros(len(c) + 1, dtype=np.int64)
+    lefts[1:] = c
+    return edges, lefts
+
+def eular_tour(edges, lefts, root):  # [eular_tour, "Tuple((i8[:],i8[:],i8[:],i8[:]))(i8[:],i8[:],i8)"],
+    # グラフは 1-indexed が良い
+    n = len(lefts)-1
+    stack = [root]
+    tour = [0] * 0
+    firsts = np.full(n, -100, dtype=np.int64)
+    lasts = np.full(n, -100, dtype=np.int64)
+    parents = np.full(n, -100, dtype=np.int64)
+    while stack:
+        v = stack.pop()
+        if firsts[v] >= 0:
+            lasts[v] = len(tour)
+            tour.append(-v)  # 帰りがけの辺の表現をマイナス以外にしたい場合ここを変える
+            continue
+        p = parents[v]
+        firsts[v] = len(tour)
+        tour.append(v)
+        stack.append(v)
+        for u in edges[lefts[v]:lefts[v+1]]:
+            if p != u:
+                parents[u] = v
+                stack.append(u)
+    tour = np.array(tour, dtype=np.int64)
+    return tour, firsts, lasts, parents
+
+
 from functools import reduce
 def rerooting(n, edges):  # [rerooting, "(i8,i8[:,:])"],
     # 全方位木 dp
@@ -177,4 +219,8 @@ def rerooting(n, edges):  # [rerooting, "(i8,i8[:,:])"],
             reduce(merge, [dp_down[u] for u in Gv], dp_up[v]), v
         ))
     return np.array(results)
+
+
+# セグメント木: https://atcoder.jp/contests/abc158/submissions/16233600
+
 
