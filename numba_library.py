@@ -222,5 +222,5 @@ def rerooting(n, edges):  # [rerooting, "(i8,i8[:,:])"],
 
 
 # セグメント木: https://atcoder.jp/contests/abc158/submissions/16233600
-
+# 平方分割（遅延評価）: https://atcoder.jp/contests/abc177/submissions/16376895
 
