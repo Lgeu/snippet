@@ -1,5 +1,7 @@
 code_cppset = r"""
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
+#include "structmember.h"
 #include <vector>
 //#undef __GNUC__  // g++ 拡張を使わない場合はここのコメントアウトを外すと高速になる
 #ifdef __GNUC__
@@ -26,8 +28,6 @@ code_cppset = r"""
     using pb_set = set<PyObject*, decltype(comp_pyobj)>;
 #endif
 #define PARSE_ARGS(types, ...) if(!PyArg_ParseTuple(args, types, __VA_ARGS__)) return NULL
-#define GET_POINTER(stCapsule) (Set4PyObject*)PyCapsule_GetPointer(stCapsule, "Set4PyObjectPtr")
-
 struct Set4PyObject{
     pb_set st;
     pb_set::iterator it;
@@ -165,183 +165,268 @@ struct Set4PyObject{
     }
 };
 
-void Set4PyObject_free(PyObject *obj){
-    Set4PyObject* const p = (Set4PyObject*)PyCapsule_GetPointer(obj, "Set4PyObjectPtr");
-    delete p;
+struct CppSet{
+    PyObject_VAR_HEAD
+    Set4PyObject* st;
+};
+
+extern PyTypeObject CppSetType;
+
+static void CppSet_dealloc(CppSet* self){
+    delete self->st;
+    Py_TYPE(self)->tp_free((PyObject*)self);
 }
-PyObject* Set4PyObject_construct(PyObject* self, PyObject* args){
-    Set4PyObject* st = new Set4PyObject();
-    return PyCapsule_New((void*)st, "Set4PyObjectPtr", Set4PyObject_free);
+static PyObject* CppSet_new(PyTypeObject* type, PyObject* args, PyObject* kwds){
+    CppSet* self;
+    self = (CppSet*)type->tp_alloc(type, 0);
+    return (PyObject*)self;
 }
-PyObject* Set4PyObject_construct_from_list(PyObject* self, PyObject* args){
-    PyObject* lst;
-    PARSE_ARGS("O", &lst);
-    int siz;
-    if(PyList_Check(lst)) siz = (int)PyList_GET_SIZE(lst);
-    else if(PyTuple_Check(lst)) siz = (int)PyTuple_GET_SIZE(lst);
-    else return PyErr_SetString(PyExc_TypeError, "got neither list nor tuple"), (PyObject*)NULL;
-    vector<PyObject*> vec(siz);
-    for(int i=0; i<siz; i++){
-        vec[i] = PyList_Check(lst) ? PyList_GET_ITEM(lst, i) : PyTuple_GET_ITEM(lst, i);
-        Py_INCREF(vec[i]);
+static int CppSet_init(CppSet* self, PyObject* args, PyObject* kwds){
+    static char* kwlist[] = {(char*)"lst", NULL};
+    PyObject* lst = NULL;
+    if(!PyArg_ParseTupleAndKeywords(args, kwds, "|O", kwlist, &lst)) return -1;
+    if(lst == NULL){
+        self->st = new Set4PyObject();
+        Py_SIZE(self) = 0;
+    }else{
+        int siz;
+        if(PyList_Check(lst)) siz = (int)PyList_GET_SIZE(lst);
+        else if(PyTuple_Check(lst)) siz = (int)PyTuple_GET_SIZE(lst);
+        else return PyErr_SetString(PyExc_TypeError, "got neither list nor tuple"), NULL;
+        vector<PyObject*> vec(siz);
+        for(int i=0; i<siz; i++){
+            vec[i] = PyList_Check(lst) ? PyList_GET_ITEM(lst, i) : PyTuple_GET_ITEM(lst, i);
+            Py_INCREF(vec[i]);
+        }
+        self->st = new Set4PyObject(vec);
+        Py_SIZE(self) = siz;
     }
-    Set4PyObject* st = new Set4PyObject(vec);
-    return PyCapsule_New((void*)st, "Set4PyObjectPtr", Set4PyObject_free);
+    return 0;
 }
-PyObject* Set4PyObject_add(PyObject* self, PyObject* args){
-    PyObject *stCapsule, *x;
-    PARSE_ARGS("OO", &stCapsule, &x);
-    Set4PyObject* st = GET_POINTER(stCapsule);
-    bool res = st->add(x);
+static PyObject* CppSet_add(CppSet* self, PyObject* args){
+    PyObject* x;
+    PARSE_ARGS("O", &x);
+    bool res = self->st->add(x);
+    if(res) Py_SIZE(self)++;
     return Py_BuildValue("O", res ? Py_True : Py_False);
 }
-PyObject* Set4PyObject_remove(PyObject* self, PyObject* args){
-    PyObject *stCapsule, *x;
-    PARSE_ARGS("OO", &stCapsule, &x);
-    Set4PyObject* st = GET_POINTER(stCapsule);
-    PyObject* res = st->remove(x);
+static PyObject* CppSet_remove(CppSet* self, PyObject* args){
+    PyObject* x;
+    PARSE_ARGS("O", &x);
+    PyObject* res = self->st->remove(x);
+    if(res==NULL) return (PyObject*)NULL;
+    Py_SIZE(self)--;
     return Py_BuildValue("O", res);
 }
-PyObject* Set4PyObject_search_higher_equal(PyObject* self, PyObject* args){
-    PyObject *stCapsule, *x;
-    PARSE_ARGS("OO", &stCapsule, &x);
-    Set4PyObject* st = GET_POINTER(stCapsule);
-    PyObject* res = st->search_higher_equal(x);
+static PyObject* CppSet_search_higher_equal(CppSet* self, PyObject* args){
+    PyObject* x;
+    PARSE_ARGS("O", &x);
+    PyObject* res = self->st->search_higher_equal(x);
     return Py_BuildValue("O", res);
 }
-PyObject* Set4PyObject_min(PyObject* self, PyObject* args){
-    PyObject *stCapsule;
-    PARSE_ARGS("O", &stCapsule);
-    Set4PyObject* st = GET_POINTER(stCapsule);
-    PyObject* res = st->min();
+static PyObject* CppSet_min(CppSet* self, PyObject* args){
+    PyObject* res = self->st->min();
     return Py_BuildValue("O", res);
 }
-PyObject* Set4PyObject_max(PyObject* self, PyObject* args){
-    PyObject *stCapsule;
-    PARSE_ARGS("O", &stCapsule);
-    Set4PyObject* st = GET_POINTER(stCapsule);
-    PyObject* res = st->max();
+static PyObject* CppSet_max(CppSet* self, PyObject* args){
+    PyObject* res = self->st->max();
     return Py_BuildValue("O", res);
 }
-PyObject* Set4PyObject_pop_min(PyObject* self, PyObject* args){
-    PyObject *stCapsule;
-    PARSE_ARGS("O", &stCapsule);
-    Set4PyObject* st = GET_POINTER(stCapsule);
-    PyObject* res = st->pop_min();
+static PyObject* CppSet_pop_min(CppSet* self, PyObject* args){
+    PyObject* res = self->st->pop_min();
+    if(res==NULL) return (PyObject*)NULL;
+    Py_SIZE(self)--;
     return res;  // 参照カウントを増やさない
 }
-PyObject* Set4PyObject_pop_max(PyObject* self, PyObject* args){
-    PyObject *stCapsule;
-    PARSE_ARGS("O", &stCapsule);
-    Set4PyObject* st = GET_POINTER(stCapsule);
-    PyObject* res = st->pop_max();
+static PyObject* CppSet_pop_max(CppSet* self, PyObject* args){
+    PyObject* res = self->st->pop_max();
+    if(res==NULL) return (PyObject*)NULL;
+    Py_SIZE(self)--;
     return res;  // 参照カウントを増やさない
 }
-PyObject* Set4PyObject_len(PyObject* self, PyObject* args){
-    PyObject *stCapsule;
-    PARSE_ARGS("O", &stCapsule);
-    Set4PyObject* st = GET_POINTER(stCapsule);
-    size_t res = st->len();
-    return Py_BuildValue("l", (long)res);
+static Py_ssize_t CppSet_len(CppSet* self){
+    return Py_SIZE(self);
 }
-PyObject* Set4PyObject_next(PyObject* self, PyObject* args){
-    PyObject *stCapsule;
-    PARSE_ARGS("O", &stCapsule);
-    Set4PyObject* st = GET_POINTER(stCapsule);
-    PyObject* res = st->iter_next();
+static PyObject* CppSet_next(CppSet* self, PyObject* args){
+    PyObject* res = self->st->iter_next();
     return Py_BuildValue("O", res);
 }
-PyObject* Set4PyObject_prev(PyObject* self, PyObject* args){
-    PyObject *stCapsule;
-    PARSE_ARGS("O", &stCapsule);
-    Set4PyObject* st = GET_POINTER(stCapsule);
-    PyObject* res = st->iter_prev();
+static PyObject* CppSet_prev(CppSet* self, PyObject* args){
+    PyObject* res = self->st->iter_prev();
     return Py_BuildValue("O", res);
 }
-PyObject* Set4PyObject_to_list(PyObject* self, PyObject* args){
-    PyObject *stCapsule;
-    PARSE_ARGS("O", &stCapsule);
-    Set4PyObject* st = GET_POINTER(stCapsule);
-    PyObject* res = st->to_list();
-    return res;  // 参照カウントを増やさない
+static PyObject* CppSet_to_list(CppSet* self, PyObject* args){
+    PyObject* res = self->st->to_list();
+    return res;
 }
-PyObject* Set4PyObject_get(PyObject* self, PyObject* args){
-    PyObject *stCapsule;
-    PARSE_ARGS("O", &stCapsule);
-    Set4PyObject* st = GET_POINTER(stCapsule);
-    PyObject* res = st->get();
+static PyObject* CppSet_get(CppSet* self, PyObject* args){
+    PyObject* res = self->st->get();
     return Py_BuildValue("O", res);
 }
-PyObject* Set4PyObject_erase(PyObject* self, PyObject* args){
-    PyObject *stCapsule;
-    PARSE_ARGS("O", &stCapsule);
-    Set4PyObject* st = GET_POINTER(stCapsule);
-    PyObject* res = st->erase();
+static PyObject* CppSet_erase(CppSet* self, PyObject* args){
+    PyObject* res = self->st->erase();
+    if(res==NULL) return (PyObject*)NULL;
+    Py_SIZE(self)--;
     return Py_BuildValue("O", res);
 }
-PyObject* Set4PyObject_copy(PyObject* self, PyObject* args){
-    PyObject *stCapsule;
-    PARSE_ARGS("O", &stCapsule);
-    Set4PyObject* st = GET_POINTER(stCapsule);
-    Set4PyObject* st2 = new Set4PyObject(*st);
-    return PyCapsule_New((void*)st2, "Set4PyObjectPtr", Set4PyObject_free);
+static PyObject* CppSet_copy(CppSet* self, PyObject* args){
+    CppSet* st2 = (CppSet*)CppSet_new(&CppSetType, (PyObject*)NULL, (PyObject*)NULL);
+    if (st2==NULL) return (PyObject*)NULL;
+    st2->st = new Set4PyObject(*self->st);
+    Py_SIZE(st2) = Py_SIZE(self);
+    return (PyObject*)st2;
 }
-PyObject* Set4PyObject_getitem(PyObject* self, PyObject* args){
-    PyObject *stCapsule;
+static PyObject* CppSet_getitem(CppSet* self, Py_ssize_t idx){
+    PyObject* res = self->st->getitem((long)idx);
+    return Py_BuildValue("O", res);
+}
+static PyObject* CppSet_pop(CppSet* self, PyObject* args){
     long idx;
-    PARSE_ARGS("Ol", &stCapsule, &idx);
-    Set4PyObject* st = GET_POINTER(stCapsule);
-    PyObject* res = st->getitem(idx);
+    PARSE_ARGS("l", &idx);
+    PyObject* res = self->st->pop(idx);
+    if(res==NULL) return (PyObject*)NULL;
+    Py_SIZE(self)--;
     return Py_BuildValue("O", res);
 }
-PyObject* Set4PyObject_pop(PyObject* self, PyObject* args){
-    PyObject *stCapsule;
-    long idx;
-    PARSE_ARGS("Ol", &stCapsule, &idx);
-    Set4PyObject* st = GET_POINTER(stCapsule);
-    PyObject* res = st->pop(idx);
-    return res;  // 参照カウントを増やさない
-}
-PyObject* Set4PyObject_index(PyObject* self, PyObject* args){
-    PyObject *stCapsule, *x;
-    PARSE_ARGS("OO", &stCapsule, &x);
-    Set4PyObject* st = GET_POINTER(stCapsule);
-    long res = st->index(x);
+static PyObject* CppSet_index(CppSet* self, PyObject* args){
+    PyObject* x;
+    PARSE_ARGS("O", &x);
+    long res = self->st->index(x);
     return Py_BuildValue("l", res);
 }
-static PyMethodDef SetMethods[] = {
-    {"construct", Set4PyObject_construct, METH_VARARGS, "Create set object"},
-    {"construct_from_list", Set4PyObject_construct_from_list, METH_VARARGS, "Create set object from list"},
-    {"add", Set4PyObject_add, METH_VARARGS, "Add item"},
-    {"remove", Set4PyObject_remove, METH_VARARGS, "Remove item"},
-    {"search_higher_equal", Set4PyObject_search_higher_equal, METH_VARARGS, "Search item"},
-    {"min", Set4PyObject_min, METH_VARARGS, "Get minimum item"},
-    {"max", Set4PyObject_max, METH_VARARGS, "Get maximum item"},
-    {"pop_min", Set4PyObject_pop_min, METH_VARARGS, "Pop minimum item"},
-    {"pop_max", Set4PyObject_pop_max, METH_VARARGS, "Pop maximum item"},
-    {"len", Set4PyObject_len, METH_VARARGS, "Get size"},
-    {"next", Set4PyObject_next, METH_VARARGS, "Get next value"},
-    {"prev", Set4PyObject_prev, METH_VARARGS, "Get previous value"},
-    {"to_list", Set4PyObject_to_list, METH_VARARGS, "Make list from set"},
-    {"get", Set4PyObject_get, METH_VARARGS, "Get item that iterator is pointing at"},
-    {"erase", Set4PyObject_erase, METH_VARARGS, "Erase item that iterator is pointing at"},
-    {"copy", Set4PyObject_copy, METH_VARARGS, "Copy set"},
-    {"getitem", Set4PyObject_getitem, METH_VARARGS, "Get item by index"},
-    {"pop", Set4PyObject_pop, METH_VARARGS, "Pop item"},
-    {"index", Set4PyObject_index, METH_VARARGS, "Get index of item"},
-    {NULL, NULL, 0, NULL} 
+static int CppSet_contains(CppSet* self, PyObject* x){
+    return PyObject_RichCompareBool(self->st->search_higher_equal(x), x, Py_EQ);
+}
+static int CppSet_bool(CppSet* self){
+    return Py_SIZE(self) != 0;
+}
+static PyObject* CppSet_repr(PyObject* self){
+    PyObject *result, *aslist;
+    aslist = ((CppSet*)self)->st->to_list();
+    result = PyUnicode_FromFormat("CppSet(%R)", aslist);
+    Py_ReprLeave(self);
+    Py_DECREF(aslist);
+    return result;
+}
+
+static PyMethodDef CppSet_methods[] = {
+    {"add", (PyCFunction)CppSet_add, METH_VARARGS, "Add item"},
+    {"remove", (PyCFunction)CppSet_remove, METH_VARARGS, "Remove item"},
+    {"search_higher_equal", (PyCFunction)CppSet_search_higher_equal, METH_VARARGS, "Search item"},
+    {"min", (PyCFunction)CppSet_min, METH_VARARGS, "Get minimum item"},
+    {"max", (PyCFunction)CppSet_max, METH_VARARGS, "Get maximum item"},
+    {"pop_min", (PyCFunction)CppSet_pop_min, METH_VARARGS, "Pop minimum item"},
+    {"pop_max", (PyCFunction)CppSet_pop_max, METH_VARARGS, "Pop maximum item"},
+    {"next", (PyCFunction)CppSet_next, METH_VARARGS, "Get next value"},
+    {"prev", (PyCFunction)CppSet_prev, METH_VARARGS, "Get previous value"},
+    {"to_list", (PyCFunction)CppSet_to_list, METH_VARARGS, "Make list from set"},
+    {"get", (PyCFunction)CppSet_get, METH_VARARGS, "Get item that iterator is pointing at"},
+    {"erase", (PyCFunction)CppSet_erase, METH_VARARGS, "Erase item that iterator is pointing at"},
+    {"copy", (PyCFunction)CppSet_copy, METH_VARARGS, "Copy set"},
+    {"getitem", (PyCFunction)CppSet_getitem, METH_VARARGS, "Get item by index"},
+    {"pop", (PyCFunction)CppSet_pop, METH_VARARGS, "Pop item"},
+    {"index", (PyCFunction)CppSet_index, METH_VARARGS, "Get index of item"},
+    {NULL}  /* Sentinel */
+};
+static PySequenceMethods CppSet_as_sequence = {
+    (lenfunc)CppSet_len,                /* sq_length */
+    0,                                  /* sq_concat */
+    0,                                  /* sq_repeat */
+    (ssizeargfunc)CppSet_getitem,       /* sq_item */
+    0,                                  /* sq_slice */
+    0,                                  /* sq_ass_item */
+    0,                                  /* sq_ass_slice */
+    (objobjproc)CppSet_contains,        /* sq_contains */
+    0,                                  /* sq_inplace_concat */
+    0,                                  /* sq_inplace_repeat */
+};
+static PyNumberMethods CppSet_as_number = {
+    0,                                  /* nb_add */
+    0,                                  /* nb_subtract */
+    0,                                  /* nb_multiply */
+    0,                                  /* nb_remainder */
+    0,                                  /* nb_divmod */
+    0,                                  /* nb_power */
+    0,                                  /* nb_negative */
+    0,                                  /* nb_positive */
+    0,                                  /* nb_absolute */
+    (inquiry)CppSet_bool,               /* nb_bool */
+    0,                                  /* nb_invert */
+};
+PyTypeObject CppSetType = {
+    PyVarObject_HEAD_INIT(NULL, 0)
+    "cppset.CppSet",                    /*tp_name*/
+    sizeof(CppSet),                     /*tp_basicsize*/
+    0,                                  /*tp_itemsize*/
+    (destructor) CppSet_dealloc,        /*tp_dealloc*/
+    0,                                  /*tp_print*/
+    0,                                  /*tp_getattr*/
+    0,                                  /*tp_setattr*/
+    0,                                  /*reserved*/
+    CppSet_repr,                        /*tp_repr*/
+    &CppSet_as_number,                  /*tp_as_number*/
+    &CppSet_as_sequence,                /*tp_as_sequence*/
+    0,                                  /*tp_as_mapping*/
+    0,                                  /*tp_hash*/
+    0,                                  /*tp_call*/
+    0,                                  /*tp_str*/
+    0,                                  /*tp_getattro*/
+    0,                                  /*tp_setattro*/
+    0,                                  /*tp_as_buffer*/
+    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, /*tp_flags*/
+    0,                                  /*tp_doc*/
+    0,                                  /*tp_traverse*/
+    0,                                  /*tp_clear*/
+    0,                                  /*tp_richcompare*/
+    0,                                  /*tp_weaklistoffset*/
+    0,                                  /*tp_iter*/
+    0,                                  /*tp_iternext*/
+    CppSet_methods,                     /*tp_methods*/
+    0,                                  /*tp_members*/
+    0,                                  /*tp_getset*/
+    0,                                  /*tp_base*/
+    0,                                  /*tp_dict*/
+    0,                                  /*tp_descr_get*/
+    0,                                  /*tp_descr_set*/
+    0,                                  /*tp_dictoffset*/
+    (initproc)CppSet_init,              /*tp_init*/
+    0,                                  /*tp_alloc*/
+    CppSet_new,                         /*tp_new*/
+    0,                                  /*tp_free*/
+    0,                                  /*tp_is_gc*/
+    0,                                  /*tp_bases*/
+    0,                                  /*tp_mro*/
+    0,                                  /*tp_cache*/
+    0,                                  /*tp_subclasses*/
+    0,                                  /*tp_weaklist*/
+    0,                                  /*tp_del*/
+    0,                                  /*tp_version_tag*/
+    0,                                  /*tp_finalize*/
 };
 
-static struct PyModuleDef setmodule = {
+static PyModuleDef cppsetmodule = {
     PyModuleDef_HEAD_INIT,
-    "cppset", 
-    NULL, 
-    -1, 
-    SetMethods,
+    "cppset",
+    NULL,
+    -1,
 };
 
-PyMODINIT_FUNC PyInit_cppset(void){
-    return PyModule_Create(&setmodule);
+PyMODINIT_FUNC PyInit_cppset(void)
+{
+    PyObject* m;
+    if(PyType_Ready(&CppSetType) < 0) return NULL;
+
+    m = PyModule_Create(&cppsetmodule);
+    if(m == NULL) return NULL;
+
+    Py_INCREF(&CppSetType);
+    if (PyModule_AddObject(m, "CppSet", (PyObject*) &CppSetType) < 0) {
+        Py_DECREF(&CppSetType);
+        Py_DECREF(m);
+        return NULL;
+    }
+
+    return m;
 }
 """
 code_setup = r"""
@@ -353,7 +438,7 @@ module = Extension(
 )
 setup(
     name="SetMethod",
-    version="0.1.1",
+    version="0.2.0",
     description="wrapper for C++ set",
     ext_modules=[module]
 )
@@ -368,73 +453,4 @@ if sys.argv[-1] == "ONLINE_JUDGE" or os.getcwd() != "/imojudge/sandbox":
         f.write(code_setup)
     os.system(f"{sys.executable} setup.py build_ext --inplace")
 
-
-import cppset
-class CppSet:
-    def __init__(self, lst=None, capsule=None):
-        if lst:
-            self.st = cppset.construct_from_list(lst)
-        elif capsule:
-            self.st = capsule
-        else:
-            self.st = cppset.construct()
-
-    def add(self, val):
-        return cppset.add(self.st, val)
-
-    def remove(self, val):
-        return cppset.remove(self.st, val)
-
-    def search_higher_equal(self, val):
-        return cppset.search_higher_equal(self.st, val)
-
-    def min(self):
-        return cppset.min(self.st)
-
-    def max(self):
-        return cppset.max(self.st)
-
-    def pop_min(self):
-        return cppset.pop_min(self.st)
-
-    def pop_max(self):
-        return cppset.pop_max(self.st)
-
-    def __len__(self):
-        return cppset.len(self.st)
-
-    def __getitem__(self, idx):
-        # g++ 拡張
-        return cppset.getitem(self.st, idx)
-
-    def pop(self, idx):
-        # g++ 拡張
-        return cppset.pop(self.st, idx)
-
-    def index(self, val):
-        # g++ 拡張  # イテレータは変化しない
-        return cppset.index(self.st, val)
-
-    def __contains__(self, val):
-        return self.search_higher_equal(val) == val
-
-    def next(self):
-        return cppset.next(self.st)
-
-    def prev(self):
-        return cppset.prev(self.st)
-
-    def to_list(self):
-        return cppset.to_list(self.st)
-
-    def get(self):
-        return cppset.get(self.st)
-
-    def erase(self):
-        return cppset.erase(self.st)
-
-    def copy(self):
-        return CppSet(capsule=cppset.copy(self.st))
-
-    def __repr__(self):
-        return f"CppSet({self.to_list().__repr__()})"
+from cppset import CppSet
