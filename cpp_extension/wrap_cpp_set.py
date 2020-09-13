@@ -116,15 +116,14 @@ struct Set4PyObject{
         return *it;
     }
     PyObject* erase(){
-        if(it == st.end()) PyErr_SetString(PyExc_KeyError, "erase end"), (PyObject*)NULL;
-        PyObject* res = *it;
+        if(it == st.end()) return PyErr_SetString(PyExc_KeyError, "erase end"), (PyObject*)NULL;
         it = st.erase(it);
         if(it == st.end()) return Py_None;
         return *it;
     }
     PyObject* getitem(const long& idx){
         long idx_pos = idx >= 0 ? idx : idx + (long)st.size();
-        if(idx_pos >= st.size() || idx_pos < 0)
+        if(idx_pos >= (long)st.size() || idx_pos < 0)
             return PyErr_Format(
                 PyExc_IndexError,
                 "cppset getitem index out of range (size=%d, idx=%d)", st.size(), idx
@@ -139,7 +138,7 @@ struct Set4PyObject{
     }
     PyObject* pop(const long& idx){
         long idx_pos = idx >= 0 ? idx : idx + (long)st.size();
-        if(idx_pos >= st.size() || idx_pos < 0)
+        if(idx_pos >= (long)st.size() || idx_pos < 0)
             return PyErr_Format(
                 PyExc_IndexError,
                 "cppset pop index out of range (size=%d, idx=%d)", st.size(), idx
@@ -180,7 +179,7 @@ PyObject* Set4PyObject_construct_from_list(PyObject* self, PyObject* args){
     int siz;
     if(PyList_Check(lst)) siz = (int)PyList_GET_SIZE(lst);
     else if(PyTuple_Check(lst)) siz = (int)PyTuple_GET_SIZE(lst);
-    else PyErr_SetString(PyExc_TypeError, "got neither list nor tuple");
+    else return PyErr_SetString(PyExc_TypeError, "got neither list nor tuple"), (PyObject*)NULL;
     vector<PyObject*> vec(siz);
     for(int i=0; i<siz; i++){
         vec[i] = PyList_Check(lst) ? PyList_GET_ITEM(lst, i) : PyTuple_GET_ITEM(lst, i);
@@ -350,11 +349,11 @@ from distutils.core import setup, Extension
 module = Extension(
     "cppset",
     sources=["set_wrapper.cpp"],
-    extra_compile_args=["-O3", "-march=native"]
+    extra_compile_args=["-O3", "-march=native", "-std=c++14"]
 )
 setup(
     name="SetMethod",
-    version="0.1.0",
+    version="0.1.1",
     description="wrapper for C++ set",
     ext_modules=[module]
 )
