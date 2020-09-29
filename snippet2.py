@@ -767,6 +767,73 @@ def rerooting(n, edges, identity, merge, add_node):
     return results
 
 
+class Doubling:
+    # ダブリング
+    def __init__(self, nexts, max_n):
+        self.table = [nexts[:]]
+        for k in range(max_n.bit_length()-1):
+            perm = self.table[-1]
+            perm_next = [0] * (len(nexts))
+            for idx_perm, p in enumerate(perm):
+                perm_next[idx_perm] = perm[p]  # perm[p] == perm[perm[idx_perm]]
+            self.table.append(perm_next)
+
+    def get(self, idx, n):
+        for bit, t in enumerate(self.table):
+            if n >> bit & 1:
+                idx = t[idx]
+        return idx
+
+class DoublingAggregation:
+    # ダブリング + 集約
+    # 検証1: Sequence Sum https://atcoder.jp/contests/abc179/submissions/17083107
+    # 検証2: Keep Distances https://atcoder.jp/contests/acl1/submissions/17084246
+    def __init__(self, nexts, arr, max_n, op, e):
+        # op はモノイド
+        n = len(nexts)
+        self.table = [nexts[:]]
+        self.data = [arr[:]]
+        self.op = op
+        self.e = e
+        self.max_n = max_n
+        for k in range(max_n.bit_length()-1):
+            perm = self.table[-1]
+            perm_next = []
+            dat = self.data[-1]
+            dat_next = []
+            for p, d in zip(perm, dat):
+                perm_next.append(perm[p])  # perm[p] == perm[perm[idx_perm]]
+                dat_next.append(op(d, dat[p]))
+            self.table.append(perm_next)
+            self.data.append(dat_next)
+ 
+    def prod(self, idx, n):
+        # arr[idx] * arr[nexts[idx]] * arr[nexts[nexts[idx]] * ... を n 回繰り替えした値を返す
+        val = self.e
+        op = self.op
+        for bit, (t, dat) in enumerate(zip(self.table, self.data)):
+            if n >> bit & 1:
+                val = op(val, dat[idx])
+                idx = t[idx]
+        return idx, val
+ 
+    def max_right(self, idx, f):
+        # f(arr[idx] * arr[nexts[idx]] * arr[nexts[nexts[idx]] * ... (n 回)) が
+        # True である最大の n と、そのときの prod(idx, n)
+        n = 0
+        val = self.e
+        op = self.op
+        for bit, t, dat in zip(range(len(self.table)-1, -1, -1), self.table[::-1], self.data[::-1]):
+            val_next = op(val, dat[idx])
+            if f(val_next):
+                val = val_next
+                idx = t[idx]
+                n |= 1 << bit
+        if n > self.max_n:
+            n = self.max_n
+        return n, idx, val
+
+
 # リスト埋め込み用  # AtCoder なら 50000 要素くらいは埋め込める  # 圧縮率が高ければそれ以上も埋め込める
 def encode_list(lst):
     import array, gzip, base64
