@@ -733,6 +733,12 @@ def xorshift(seed=123456789):  # 31 bit xorshift
 # 重み付き UnionFind https://atcoder.jp/contests/code-festival-2016-quala/submissions/8336387
 # Trie https://atcoder.jp/contests/code-festival-2016-qualb/submissions/8335110
 # 全方位木 dp https://atcoder.jp/contests/yahoo-procon2019-final-open/submissions/8664902
+# 平方分割
+#  I hate Shortest Path Problem https://atcoder.jp/contests/abc177/submissions/16384352
+#  Replace Digits https://atcoder.jp/contests/abl/submissions/17049200
+#  天下一数列にクエリを投げます https://atcoder.jp/contests/tenka1-2016-qualb/submissions/14415635
+#  Range Affine Range Sum https://atcoder.jp/contests/practice2/submissions/17100361
+
 
 A = csgraph.dijkstra(X, indices=0)
 

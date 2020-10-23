@@ -70,7 +70,7 @@ struct Set4PyObject{
     }
     PyObject* max(){
         if(st.size()==0)
-            return PyErr_SetString(PyExc_IndexError, "min from an empty set"), (PyObject*)NULL;
+            return PyErr_SetString(PyExc_IndexError, "max from an empty set"), (PyObject*)NULL;
         it = prev(st.end());
         return *it;
     }
@@ -438,7 +438,7 @@ module = Extension(
 )
 setup(
     name="SetMethod",
-    version="0.2.0",
+    version="0.2.1",
     description="wrapper for C++ set",
     ext_modules=[module]
 )
