@@ -315,15 +315,16 @@ def shortest_path_faster_algorithm(E, start):
 
 
 class UnionFind:
+    # 検証: https://atcoder.jp/contests/practice2/submissions/17594179
     def __init__(self, N):
         self.p = list(range(N))
-        self.rank = [0] * N
         self.size = [1] * N
 
     def root(self, x):
-        if self.p[x] != x:
-            self.p[x] = self.root(self.p[x])
-        return self.p[x]
+        p = self.p
+        while x != p[x]:
+            x = p[x]
+        return x
 
     def same(self, x, y):
         return self.root(x) == self.root(y)
@@ -333,16 +334,15 @@ class UnionFind:
         v = self.root(y)
         if u == v:
             return
-        if self.rank[u] < self.rank[v]:
+        size = self.size
+        if size[u] < size[v]:
             self.p[u] = v
-            self.size[v] += self.size[u]
-            self.size[u] = 0
+            size[v] += size[u]
+            size[u] = 0
         else:
             self.p[v] = u
-            self.size[u] += self.size[v]
-            self.size[v] = 0
-            if self.rank[u] == self.rank[v]:
-                self.rank[u] += 1
+            size[u] += size[v]
+            size[v] = 0
 
     def count(self, x):
         return self.size[self.root(x)]
