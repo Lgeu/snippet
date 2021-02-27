@@ -1,25 +1,36 @@
-def egcd(a, b):
+def extgcd(a, b):
     # 拡張ユークリッド互除法
-    # ax + by = gcd(a,b)の最小整数解を返す
-    # 最大公約数はg
-    if a == 0:
-        return b, 0, 1
-    else:
-        g, y, x = egcd(b % a, a)
-        return g, x - (b // a) * y, y
+    # ax + by = gcd(a,b) の最小整数解 (gcd(a,b), x, y) を返す
+    u = y = 1
+    v = x = 0
+    while a:
+        q = b // a
+        x, u = u, x-q*u
+        y, v = v, y-q*v
+        b, a = a, b-q*a
+    return b, x, y
 
-def chineseRem(b1, m1, b2, m2):
-    # 中国剰余定理
-    # x ≡ b1 (mod m1) ∧ x ≡ b2 (mod m2) <=> x ≡ r (mod m)
-    # となる(r. m)を返す
-    # 解無しのとき(0, -1)
-    d, p, q = egcd(m1, m2)
-    if (b2 - b1) % d != 0:
+    # 再帰版
+    # if a == 0:
+    #     return b, 0, 1
+    # else:
+    #     g, y, x = extgcd(b % a, a)
+    #     return g, x - (b // a) * y, y
+
+def chinese_reminder_theorem(q1, m1, q2, m2):
+    # 中国剰余定理 (CRT)
+    #   x ≡ m1 (mod q1) ∧ x ≡ m2 (mod q2)
+    #   <=> x ≡ m (mod q)
+    # となる (m. q) を返す
+    # 解無しのとき (0, -1)
+    # 検証: https://atcoder.jp/contests/abc193/submissions/20558893
+    gcd_, p, q = extgcd(q1, q2)
+    if (m2 - m1) % gcd_ != 0:
         return 0, -1
-    m = m1 * (m2 // d)  # m = lcm(m1, m2)
-    tmp = (b2-b1) // d * p % (m2 // d)
-    r = (b1 + m1 * tmp) % m
-    return r, m
+    q = q1 * (q2 // gcd_)  # q = lcm(q1, q2)
+    tmp = (m2 - m1) // gcd_ * p % (q2 // gcd_)
+    m = (m1 + q1 * tmp) % q
+    return m, q
 
 def modinv(a, mod=10**9+7):
     return pow(a, mod-2, mod)
