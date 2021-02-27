@@ -1,10 +1,12 @@
 # 参考
 # https://ikatakos.com/pot/programming/python/packages/numba
 
-import numpy as np
-
 
 # >>> numba compile >>>
+
+import sys
+import numpy as np
+
 def numba_compile(numba_config):
     import os, sys
     if sys.argv[-1] == "ONLINE_JUDGE":
@@ -25,17 +27,23 @@ def numba_compile(numba_config):
         for func, signature in numba_config:
             globals()[func.__name__] = njit(signature, cache=True)(func)
         print("compiled!", file=sys.stderr)
+
 def solve(In):
     idx_In = np.array([-1], dtype=np.int64)
     def read():
         idx_In[0] += 1
         return In[idx_In[0]]
+
 numba_compile([
     [solve, "void(i8[:])"],
 ])
+
 def main():
     In = np.array(sys.stdin.buffer.read().split(), dtype=np.int64)
     solve(In)
+
+main()
+
 # <<< numba compile <<<
 
 
