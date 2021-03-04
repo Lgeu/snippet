@@ -260,3 +260,5 @@ class Rmq:
 
     def __setitem__(self, key, value):
         self.set_value(key, value)
+
+# https://atcoder.jp/contests/nikkei2019-2-qual/submissions/8434117 もある
