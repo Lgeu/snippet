@@ -566,3 +566,69 @@ if sys.argv[-1] == "ONLINE_JUDGE" or os.getcwd() != "/imojudge/sandbox":
 
 from atcoder import MFGraph, MFGraphEdge
 
+
+class ProjectSelection:
+    def __init__(self, n, n_buffer=0):
+        self.n = n
+        self.n_buffer = n_buffer
+        self.g = MFGraph(n + n_buffer + 2)
+        self.offset = 0
+        self.additional_node_index = n + 2
+
+    def add_constraint(self, x, zero_one, gain):
+        assert 0 <= x < self.n, f"x={x}, self.n={self.n}"
+        s = self.n
+        t = s + 1
+        if zero_one == 0:
+            if gain > 0:
+                self.offset += gain
+                self.g.add_edge(s, x, gain)
+            elif gain < 0:
+                self.g.add_edge(x, t, -gain)
+        elif zero_one == 1:
+            if gain > 0:
+                self.offset += gain
+                self.g.add_edge(x, t, gain)
+            else:
+                self.g.add_edge(s, x, -gain)
+        else:
+            assert False, f"zero_one={zero_one}"
+
+    def add_constraint_01(self, x, y, gain):  # (x, y) == (0, 1) なら gain 得る
+        assert gain <= 0
+        self.g.add_edge(x, y, -gain)
+
+    def add_constraint_neq(self, x, y, gain):  # 異なるなら gain 得る
+        assert gain <= 0
+        self.g.add_edge(x, y, -gain)
+        self.g.add_edge(y, x, -gain)
+
+    def add_constraint_eq(self, x, y, gain):  # 同じなら gain 得る
+        assert gain >= 0
+        self.offset += gain
+        self.g.add_edge(x, y, gain)
+        self.g.add_edge(y, x, gain)
+
+    def add_constraint_2(self, x, y, zero_one, gain):  # x == y == zero_one なら gain 得る
+        assert gain >= 0
+        s = self.n
+        t = s + 1
+        w = self.additional_node_index
+        assert w < self.n + self.n_buffer + 2
+        self.offset += gain
+        if zero_one == 0:
+            self.g.add_edge(s, w, gain)
+            self.g.add_edge(w, x, 10**18)
+            self.g.add_edge(w, y, 10**18)
+        elif zero_one == 1:
+            self.g.add_edge(w, t, gain)
+            self.g.add_edge(x, w, 10**18)
+            self.g.add_edge(y, w, 10**18)
+        else:
+            assert False
+        self.additional_node_index += 1
+
+    def solve(self):
+        return self.offset - self.g.flow(self.n, self.n+1)
+
+

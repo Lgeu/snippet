@@ -1,6 +1,12 @@
 def extgcd(a, b):
-    # 拡張ユークリッド互除法
-    # ax + by = gcd(a,b) の最小整数解 (gcd(a,b), x, y) を返す
+    """ 拡張ユークリッド互除法
+    ax + by = gcd(a,b) の最小整数解 (gcd(a,b), x, y) を返す
+    Args:
+        a (int):
+        b (int):
+    Returns:
+        Tuple[int, int, int]
+    """
     u = y = 1
     v = x = 0
     while a:
@@ -18,12 +24,25 @@ def extgcd(a, b):
     #     return g, x - (b // a) * y, y
 
 def chinese_reminder_theorem(q1, m1, q2, m2):
-    # 中国剰余定理 (CRT)
-    #   x ≡ m1 (mod q1) ∧ x ≡ m2 (mod q2)
-    #   <=> x ≡ m (mod q)
-    # となる (m. q) を返す
-    # 解無しのとき (0, -1)
-    # 検証: https://atcoder.jp/contests/abc193/submissions/20558893
+    """中国剰余定理 (CRT)
+
+    x ≡ m1 (mod q1) ∧ x ≡ m2 (mod q2)
+    <=> x ≡ m (mod q)
+    となる (m. q) を返す
+    解無しのとき (0, -1) を返す
+
+    verify:
+        https://atcoder.jp/contests/abc193/submissions/20558893
+
+    Args:
+        q1 (int): 除数
+        m1 (int): あまり
+        q2 (int): 除数
+        m2 (int): あまり
+
+    Returns:
+        Tuple[int, int]: 除数、あまり
+    """
     gcd_, p, q = extgcd(q1, q2)
     if (m2 - m1) % gcd_ != 0:
         return 0, -1
@@ -80,7 +99,7 @@ class Combination:
             facinv.append(f)
         facinv.reverse()
 
-    def __call__(self, n, r):  # self.C と同じ
+    def __call__(self, n, r):
         return self.fac[n] * self.facinv[r] % self.mod * self.facinv[n-r] % self.mod
 
     def C(self, n, r):
