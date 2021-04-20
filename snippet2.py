@@ -834,6 +834,92 @@ class DoublingAggregation:
         return n, idx, val
 
 
+def berlekamp_massey(arr, mod):
+    # 返り値は数列の後ろに掛けるやつが前（伝われ）
+    # 参考: https://judge.yosupo.jp/submission/33639
+    n = len(arr)
+    bs, cs = [1], [1]
+    num_zeros_before_top_of_bs = 0
+    y = 1
+    l = 0
+    for ed in range(n):
+        num_zeros_before_top_of_bs += 1
+        len_cs, len_bs = len(cs), len(bs) + num_zeros_before_top_of_bs
+        x = 0
+        for i, c in enumerate(cs):
+            x = (x + c * arr[ed-i]) % mod
+        if x == 0:
+            continue
+        freq = x * pow(y, mod-2, mod) % mod
+        if len_cs < len_bs:
+            if 2 * l <= ed:
+                cs_old = cs[:]
+                cs += [0] * (len_bs - len_cs)
+                for i, b in enumerate(bs, num_zeros_before_top_of_bs):
+                    cs[i] = (cs[i] - b * freq) % mod
+                bs = cs_old
+                l = ed + 1 - l
+                num_zeros_before_top_of_bs = 0
+                y = x
+                continue
+            cs += [0] * (len_bs - len_cs)
+        for i, b in enumerate(bs, num_zeros_before_top_of_bs):
+            cs[i] = (cs[i] - freq * b) % mod
+    return [-c % mod for c in cs[1:]]
+
+
+def karatsuba(poly1, poly2):
+    # 多項式乗算 (そんなに速くない)
+    n = len(poly1) + len(poly2) - 1
+    r = max(len(poly1), len(poly2))
+    r = 1 << (r-1).bit_length()  # r 以上の最小の 2 冪
+    poly1 = poly1 + [0] * (r - len(poly1))
+    poly2 = poly2 + [0] * (r - len(poly2))
+    res = [0] * (r * 4)
+    path = [[0, r, 0]]
+    PHASE = 2
+    while path:
+        l, r, phase = path[-1]
+        c = l + r >> 1
+        d = r - l
+        half = d >> 1
+        if phase == 0:
+            if d <= 32:
+                for i in range(d):
+                    for j in range(d):
+                        res[d+d+i+j] += poly1[l+i] * poly2[l+j]
+                path.pop()
+                continue
+            path[-1][PHASE] = 1
+            path.append([l, c, 0])
+        elif phase == 1:
+            for i in range(d, d*2-1):
+                res[d+i] += res[i]
+                res[d+half+i] += res[i]
+                res[i] = 0
+            path[-1][PHASE] = 2
+            path.append([c, r, 0])
+        elif phase == 2:
+            for i in range(d, d*2-1):
+                res[d+half+i] += res[i]
+                res[d+d+i] += res[i]
+                res[i] = 0
+            for i in range(l, c):
+                poly1[half+i] -= poly1[i]
+                poly2[half+i] -= poly2[i]
+            path[-1][PHASE] = 3
+            path.append([c, r, 0])
+        else:
+            for i in range(l, c):
+                poly1[half+i] += poly1[i]
+                poly2[half+i] += poly2[i]
+            for i in range(d, d*2-1):
+                res[d+half+i] -= res[i]
+                res[i] = 0
+            path.pop()
+    return res[len(res)//2:len(res)//2+n]
+
+
 # リスト埋め込み用  # AtCoder なら 50000 要素くらいは埋め込める  # 圧縮率が高ければそれ以上も埋め込める
 def encode_list(lst):
     import array, gzip, base64

@@ -109,6 +109,8 @@
 - 最大クリーク (Bron–Kerbosch algorithm + ヒューリスティック枝刈り)
 - 全方位木 DP
 - ダブリング
+- Berlekamp--Massey
+- Karatsuba 法
 - リスト埋め込み用エンコーダ・デコーダ
 
 ##### square_skip_list.py
