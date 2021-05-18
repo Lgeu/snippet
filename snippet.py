@@ -296,23 +296,24 @@ class Bit2:
         return res
 
 
-def dijkstra(E, start):
+def dijkstra(G, start):
     # ダイクストラ法
     from heapq import heappush, heappop
-    N = len(E)
-    inf = float("inf")
-    dist = [inf] * N
-    dist[start] = 0
+    N = len(G)
+    inf = 1 << 62
+    distances = [inf] * N
+    distances[start] = 0
     q = [(0, start)]
     while q:
-        dist_v, v = heappop(q)
-        if dist[v] != dist_v:
+        dv, v = heappop(q)
+        if distances[v] != dv:
             continue
-        for u, dist_vu in E[v]:
-            dist_u = dist_v + dist_vu
-            if dist_u < dist[u]:
-                dist[u] = dist_u
-                heappush(q, (dist_u, u))
+        for u, cost in G[v]:
+            du = dv + cost
+            if du < distances[u]:
+                distances[u] = du
+                heappush(q, (du, u))
+    return distances
 
 def shortest_path_faster_algorithm(E, start):
     # ベルマンフォードの更新があるところだけ更新する感じのやつ
