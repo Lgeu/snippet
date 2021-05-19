@@ -767,6 +767,32 @@ def rerooting(n, edges, identity, merge, add_node):
     return results
 
 
+class SlidingMinimum:
+    # スライド最小値
+    # 検証: https://atcoder.jp/contests/typical90/submissions/22738794
+    def __init__(self):
+        from collections import deque
+        self.left = self.right = 0
+        self.q = deque()
+
+    def push(self, val):
+        q = self.q
+        while q and q[-1][0] >= val:
+            q.pop()
+        q.append((val, self.right))
+        self.right += 1
+
+    def pop(self):
+        if self.q[0][1] == self.left:
+            self.q.popleft()
+        self.left += 1
+
+    def min(self):
+        return self.q[0][0] if self.q else 1<<62
+
+    def __len__(self):
+        return self.right - self.left
+
 class Doubling:
     # ダブリング
     def __init__(self, nexts, max_n):

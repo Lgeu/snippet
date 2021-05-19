@@ -108,6 +108,7 @@
 - きたまさ法
 - 最大クリーク (Bron–Kerbosch algorithm + ヒューリスティック枝刈り)
 - 全方位木 DP
+- スライド最小値
 - ダブリング
 - Berlekamp--Massey
 - Karatsuba 法
