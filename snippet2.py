@@ -354,10 +354,10 @@ def gauss_jordan(A):
     del A[idx:]
 
 
-class HLD:
-    # HL 分解
-    # 検証1 (distance) 閉路: https://atcoder.jp/contests/abc014/submissions/13991240
-    # 検証2 (lca) [yosupo] Lowest Common Ancestor: https://judge.yosupo.jp/submission/12490
+class HeavyLightDecomposition:
+    # HL 分解 (HLD)
+    # 検証1 (lca) [CF] Tree Array: https://codeforces.com/contest/1540/submission/120730365
+    # 検証2 (lca) [yosupo] Lowest Common Ancestor: https://judge.yosupo.jp/submission/51656
     def __init__(self, E, root=1):
         # E は双方向に辺を張った木で、破壊的に有向グラフに変更される
         # O(N)
@@ -399,8 +399,6 @@ class HLD:
                         if Size[u] > ma:
                             ma = Size[u]
                             argmax = i
-                    u0, um = Ev[0], Ev[argmax]
-                    Size[u0], Size[um] = Size[um], Size[u0]
                     Ev[0], Ev[argmax] = Ev[argmax], Ev[0]
                 Size[v] = sum(Size[u] for u in Ev) + 1
                 Path.pop()
