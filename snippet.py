@@ -407,10 +407,10 @@ def fast_zeta_transform_subset(arr):
 
 
 class SegmentTree(object):
-    # 検証: https://atcoder.jp/contests/nikkei2019-2-qual/submissions/8434117
+    # 検証: https://atcoder.jp/contests/abc256/submissions/32575668
     # 参考: https://atcoder.jp/contests/abc014/submissions/3935971
     __slots__ = ["elem_size", "tree", "default", "op", "real_size"]
-
+ 
     def __init__(self, a, default, op):
         self.default = default
         self.op = op
@@ -425,20 +425,20 @@ class SegmentTree(object):
             self.real_size = a
             self.elem_size = elem_size = 1 << (self.real_size-1).bit_length()
             self.tree = [default] * (elem_size * 2)
-
+ 
     def get_value(self, x: int, y: int) -> int:  # 半開区間
         l, r = x + self.elem_size, y + self.elem_size
-        tree, result, op = self.tree, self.default, self.op
+        tree, result_l, result_r, op = self.tree, self.default, self.default, self.op
         while l < r:
             if l & 1:
-                result = op(tree[l], result)
+                result_l = op(result_l, tree[l])
                 l += 1
             if r & 1:
                 r -= 1
-                result = op(tree[r], result)
+                result_r = op(tree[r], result_r)
             l, r = l >> 1, r >> 1
-        return result
-
+        return op(result_l, result_r)
+ 
     def set_value(self, i: int, value: int) -> None:
         k = self.elem_size + i
         op, tree = self.op, self.tree
@@ -446,10 +446,10 @@ class SegmentTree(object):
         while k > 1:
             k >>= 1
             tree[k] = op(tree[k << 1], tree[(k << 1) + 1])
-
+ 
     def get_one_value(self, i):
         return self.tree[i+self.elem_size]
-
+ 
     def debug(self):
         print(self.tree[self.elem_size:self.elem_size+self.real_size])
 
