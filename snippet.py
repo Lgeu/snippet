@@ -621,36 +621,31 @@ def faulhaber(k, n, mod=10**9+7):  # べき乗和 0^k + 1^k + ... + (n-1)^k
 
 
 class RollingHash:
-    # 未検証
-    # 参考1:  http://tjkendev.github.io/procon-library/python/string/rolling_hash.html
-    # 参考2:  https://ei1333.github.io/algorithm/rolling-hash.html
-    BASE = 1000
-    MOD = 1111111111111111111  # ≒10**18 素数  # 10**9くらいの素数2つ使うのとどちらが速い？
+    # 参考:  https://ei1333.github.io/algorithm/rolling-hash.html
     def __init__(self, s):
         self.s = s
         self.n = n = len(s)
-        BASE = RollingHash.BASE
-        MOD = RollingHash.MOD
-        self.h = h = [0]*(n+1)
+        self.base = 1000
+        self.mod = 10 ** 9 * 7
+        self.bases = [0]
+        self.hashed = [0] * (n + 1)
+        self.power = [0] * (n + 1)
+        self.power[0] = 1
         for i in range(n):
-            h[i+1] = (h[i] * BASE + ord(s[i])) % MOD
+            self.power[i + 1] = self.power[i] * self.base % self.mod
+            self.hashed[i + 1] = (self.hashed[i] + ord(s[i])) * self.base % self.mod
 
     def get(self, l, r):  # [l, r)
-        MOD = RollingHash.MOD
-        return (self.h[r] - self.h[l]*pow(RollingHash.BASE, r-l, MOD)) % MOD
-
-    @classmethod
-    def connect(cls, h1, h2, h2len):
-        return (h1 * pow(cls.BASE, h2len, cls.MOD) + h2) % cls.MOD
+        return (self.hashed[r] - self.hashed[l] * self.power[r - l]) % self.mod
 
     def lcp(self, h2, l1, r1, l2, r2):  # 最長共通接頭辞
         # 区間の長さ N に対して O(logN)  # h2 は RollingHash オブジェクト
         # 自身の [l1, r1) と h2 の [l2, r2) の最長共通接頭辞の長さを返す
-        length = min(r1-l1, r2-l2)
-        ok, ng = 0, length+1
+        length = min(r1 - l1, r2 - l2)
+        ok, ng = 0, length + 1
         while ng - ok > 1:
             c = ok + ng >> 1
-            if self.get(l1, l1+c) == h2.get(l2, l2+c):
+            if self.get(l1, l1 + c) == h2.get(l2, l2 + c):
                 ok = c
             else:
                 ng = c
